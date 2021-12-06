@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+
+<title>PC9 time course</title>
+
+<script src="site_libs/header-attrs-2.10/header-attrs.js"></script>
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<link rel="icon" href="https://github.com/workflowr/workflowr-assets/raw/master/img/reproducible.png">
+<!-- Add a small amount of space between sections. -->
+<style type="text/css">
+div.section {
+  padding-top: 12px;
+}
+</style>
+
+
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Persister</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li>
+  <a href="about.html">About</a>
+</li>
+<li>
+  <a href="license.html">License</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Analyses
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="PC9_time_course.html">PC9 cells trajectory analysis</a>
+    </li>
+  </ul>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">PC9 time course</h1>
+
+</div>
+
+
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-report" data-toggle="collapse" data-target="#workflowr-report">
+<span class="glyphicon glyphicon-list" aria-hidden="true"></span> workflowr <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span>
+</button>
+</p>
+<div id="workflowr-report" class="collapse">
+<ul class="nav nav-tabs">
+<li class="active">
+<a data-toggle="tab" href="#summary">Summary</a>
+</li>
+<li>
+<a data-toggle="tab" href="#checks"> Checks <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> </a>
+</li>
+<li>
+<a data-toggle="tab" href="#versions">Past versions</a>
+</li>
+</ul>
+<div class="tab-content">
+<div id="summary" class="tab-pane fade in active">
+<p>
+<strong>Last updated:</strong> 2021-12-06
+</p>
+<p>
+<strong>Checks:</strong> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 7 <span class="glyphicon glyphicon-exclamation-sign text-danger" aria-hidden="true"></span> 0
+</p>
+<p>
+<strong>Knit directory:</strong> <code>MC015_Persister_public/</code> <span class="glyphicon glyphicon-question-sign" aria-hidden="true" title="This is the local directory in which the code in this file was executed."> </span>
+</p>
+<p>
+This reproducible <a href="http://rmarkdown.rstudio.com">R Markdown</a> analysis was created with <a
+  href="https://github.com/jdblischak/workflowr">workflowr</a> (version 1.6.2). The <em>Checks</em> tab describes the reproducibility checks that were applied when the results were created. The <em>Past versions</em> tab lists the development history.
+</p>
+<hr>
+</div>
+<div id="checks" class="tab-pane fade">
+<div id="workflowr-checks" class="panel-group">
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRMarkdownfilestronguptodate"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>R Markdown file:</strong> up-to-date </a>
+</p>
+</div>
+<div id="strongRMarkdownfilestronguptodate" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great! Since the R Markdown file has been committed to the Git repository, you know the exact version of the code that produced these results.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongEnvironmentstrongempty"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Environment:</strong> empty </a>
+</p>
+</div>
+<div id="strongEnvironmentstrongempty" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! The global environment was empty. Objects defined in the global environment can affect the analysis in your R Markdown file in unknown ways. For reproduciblity it’s best to always run the code in an empty environment.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSeedstrongcodesetseed20211206code"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Seed:</strong> <code>set.seed(20211206)</code> </a>
+</p>
+</div>
+<div id="strongSeedstrongcodesetseed20211206code" class="panel-collapse collapse">
+<div class="panel-body">
+<p>The command <code>set.seed(20211206)</code> was run prior to running the code in the R Markdown file. Setting a seed ensures that any results that rely on randomness, e.g. subsampling or permutations, are reproducible.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSessioninformationstrongrecorded"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Session information:</strong> recorded </a>
+</p>
+</div>
+<div id="strongSessioninformationstrongrecorded" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Recording the operating system, R version, and package versions is critical for reproducibility.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongCachestrongnone"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Cache:</strong> none </a>
+</p>
+</div>
+<div id="strongCachestrongnone" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Nice! There were no cached chunks for this analysis, so you can be confident that you successfully produced the results during this run.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongFilepathsstrongrelative"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>File paths:</strong> relative </a>
+</p>
+</div>
+<div id="strongFilepathsstrongrelative" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Using relative paths to the files within your workflowr project makes it easier to run your code on other machines.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcommarkgeneMC015Persisterpublictree856f2d54f20a5bff9d7251cb751bd1beb67c6d18targetblank856f2d5a"> <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> <strong>Repository version:</strong> <a href="https://github.com/markgene/MC015_Persister_public/tree/856f2d54f20a5bff9d7251cb751bd1beb67c6d18" target="_blank">856f2d5</a> </a>
+</p>
+</div>
+<div id="strongRepositoryversionstrongahrefhttpsgithubcommarkgeneMC015Persisterpublictree856f2d54f20a5bff9d7251cb751bd1beb67c6d18targetblank856f2d5a" class="panel-collapse collapse">
+<div class="panel-body">
+<p>
+Great! You are using Git for version control. Tracking code development and connecting the code version to the results is critical for reproducibility.
+</p>
+<p>
+The results in this page were generated with repository version <a href="https://github.com/markgene/MC015_Persister_public/tree/856f2d54f20a5bff9d7251cb751bd1beb67c6d18" target="_blank">856f2d5</a>. See the <em>Past versions</em> tab to see a history of the changes made to the R Markdown and HTML files.
+</p>
+<p>
+Note that you need to be careful to ensure that all relevant files for the analysis have been committed to Git prior to generating the results (you can use <code>wflow_publish</code> or <code>wflow_git_commit</code>). workflowr only checks the R Markdown file, but you know if there are other scripts or data files that it depends on. Below is the status of the Git repository when the results were generated:
+</p>
+<pre><code>
+Ignored files:
+    Ignored:    .Rproj.user/
+    Ignored:    output/.DS_Store
+    Ignored:    output/PC9_set6/
+
+Unstaged changes:
+    Modified:   analysis/_site.yml
+
+</code></pre>
+<p>
+Note that any generated files, e.g. HTML, png, CSS, etc., are not included in this status report because it is ok for generated content to have uncommitted changes.
+</p>
+</div>
+</div>
+</div>
+</div>
+<hr>
+</div>
+<div id="versions" class="tab-pane fade">
+
+<p>
+These are the previous versions of the repository in which changes were made to the R Markdown (<code>analysis/PC9_time_course.Rmd</code>) and HTML (<code>docs/PC9_time_course.html</code>) files. If you’ve configured a remote Git repository (see <code>?wflow_git_remote</code>), click on the hyperlinks in the table below to view the files as they were in that past version.
+</p>
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+File
+</th>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+<th>
+Message
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/markgene/MC015_Persister_public/blob/b80ba35ac447496fb0fb8dfc4d977de4d9ff117b/analysis/PC9_time_course.Rmd" target="_blank">b80ba35</a>
+</td>
+<td>
+Mark J Chen
+</td>
+<td>
+2021-12-06
+</td>
+<td>
+feat: add PC9 time course analysis.
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<hr>
+</div>
+</div>
+</div>
+<div id="data" class="section level1" number="1">
+<h1><span class="header-section-number">1</span> Data</h1>
+<p>You can download filtered feature-barcode matrices in HDF5 format from GEO database (GSE189639). The script here suppose an organization of files as below:</p>
+<pre><code>2214004_JCC287_PC9_MOCK2_GEX/outs/filtered_feature_bc_matrix.h5
+2214005_JCC287_PC9_1d_rel_GEX/outs/filtered_feature_bc_matrix.h5
+2214006_JCC287_PC9_3d_rel_GEX/outs/filtered_feature_bc_matrix.h5
+2214007_JCC287_PC9_1w_rel_GEX/outs/filtered_feature_bc_matrix.h5</code></pre>
+</div>
+<div id="load-packages-functions-and-default-parameters" class="section level1" number="2">
+<h1><span class="header-section-number">2</span> Load packages, functions and default parameters</h1>
+<pre class="r"><code>source(&quot;code/param_pkg_func.scRNA.R&quot;)</code></pre>
+</div>
+<div id="qc-and-preprocess-of-individual-samples" class="section level1" number="3">
+<h1><span class="header-section-number">3</span> QC and preprocess of individual samples</h1>
+<p>Basic steps:</p>
+<ol style="list-style-type: decimal">
+<li>Create Seurat object from raw data.</li>
+<li>Quality control:
+<ol style="list-style-type: decimal">
+<li>Taste the threshold to filter low quality cells using genes per cell, percentage of reads mapped to mitochondrial genes and/or ribosomal protein genes. The genes present in very few cells are also excluded.</li>
+<li>Genes expressed at extremely high level, such as mitochondrial genes or ribosomal protein genes, are also excluded.</li>
+</ol></li>
+<li>Preprocessing following Seurat documentation, particularly vignettes <a href="https://satijalab.org/seurat/articles/pbmc3k_tutorial.html">Guided Clustering Tutorial</a> and <a href="https://satijalab.org/seurat/articles/cell_cycle_vignette.html">Cell-Cycle Scoring and Regression</a>.</li>
+</ol>
+<pre class="r"><code># Path to raw data
+# Change to your folder if needed
+SRM229845_LOCAL_CACHE_DIR &lt;- &quot;/Users/jchen4/Cache/MC015_Persister/result/SRM229845/&quot;
+X2214004_JCC287_PC9_MOCK2_GEX.CR_OUT &lt;- &quot;2214004_JCC287_PC9_MOCK2_GEX&quot;
+X2214005_JCC287_PC9_1d_rel_GEX.CR_OUT &lt;- &quot;2214005_JCC287_PC9_1d_rel_GEX&quot;
+X2214006_JCC287_PC9_3d_rel_GEX.CR_OUT &lt;- &quot;2214006_JCC287_PC9_3d_rel_GEX&quot;
+X2214007_JCC287_PC9_1w_rel_GEX.CR_OUT &lt;- &quot;2214007_JCC287_PC9_1w_rel_GEX&quot;
+
+PC9_SET6.RES &lt;- here::here(&quot;output/PC9_set6&quot;)
+if (!dir.exists(PC9_SET6.RES)) dir.create(PC9_SET6.RES, recursive = TRUE)</code></pre>
+<div id="day-1" class="section level2" number="3.1">
+<h2><span class="header-section-number">3.1</span> Day 1</h2>
+<pre class="r"><code>X2214005_JCC287_PC9_1d_rel_GEX.srt &lt;-
+  Read10X_h5(filename = file.path(
+    SRM229845_LOCAL_CACHE_DIR, 
+    X2214005_JCC287_PC9_1d_rel_GEX.CR_OUT, 
+    &quot;outs&quot;,
+    &quot;filtered_feature_bc_matrix.h5&quot;
+  )) %&gt;%
+  CreateSeuratObject(counts = .,
+                     project = X2214005_JCC287_PC9_1d_rel_GEX.CR_OUT)
+
+# Add mito ratio, ribo ratio and alias
+X2214005_JCC287_PC9_1d_rel_GEX.srt &lt;- add_alias_meta(X2214005_JCC287_PC9_1d_rel_GEX.srt)
+
+# After tasting the thresholds
+nFeature_min &lt;- 1000
+nFeature_max &lt;- 10000
+mito_ratio &lt;- 10
+ribo_ratio &lt;- 0
+
+# Filtering 
+min_gene_cell_frac &lt;- 1.5e-3
+ncol(X2214005_JCC287_PC9_1d_rel_GEX.srt) * min_gene_cell_frac
+selected_c &lt;-
+  WhichCells(
+    X2214005_JCC287_PC9_1d_rel_GEX.srt,
+    expression = nFeature_RNA &gt; nFeature_min &amp;
+      nFeature_RNA &lt; nFeature_max
+  )
+selected_f &lt;-
+  rownames(X2214005_JCC287_PC9_1d_rel_GEX.srt)[Matrix::rowSums(X2214005_JCC287_PC9_1d_rel_GEX.srt) &gt; floor(ncol(X2214005_JCC287_PC9_1d_rel_GEX.srt) * min_gene_cell_frac)]
+
+
+X2214005_JCC287_PC9_1d_rel_GEX.flt.srt &lt;-
+  subset(X2214005_JCC287_PC9_1d_rel_GEX.srt,
+         features = selected_f,
+         cells = selected_c)
+
+X2214005_JCC287_PC9_1d_rel_GEX.flt.srt &lt;-
+  subset(X2214005_JCC287_PC9_1d_rel_GEX.flt.srt,
+         subset = mitoRatio &lt; mito_ratio &amp; riboRatio &gt; ribo_ratio)
+
+X2214005_JCC287_PC9_1d_rel_GEX.flt.srt[!grepl(&quot;MALAT1&quot;, rownames(X2214005_JCC287_PC9_1d_rel_GEX.flt.srt)), ]
+X2214005_JCC287_PC9_1d_rel_GEX.flt.srt &lt;- X2214005_JCC287_PC9_1d_rel_GEX.flt.srt[!grepl(&quot;^MT-&quot;, rownames(X2214005_JCC287_PC9_1d_rel_GEX.flt.srt)), ]
+X2214005_JCC287_PC9_1d_rel_GEX.flt.srt &lt;- X2214005_JCC287_PC9_1d_rel_GEX.flt.srt[!grepl(&quot;^RP[SL]&quot;, rownames(X2214005_JCC287_PC9_1d_rel_GEX.flt.srt)), ]
+X2214005_JCC287_PC9_1d_rel_GEX.flt.srt &lt;- X2214005_JCC287_PC9_1d_rel_GEX.flt.srt[!grepl(&quot;FTH1&quot;, rownames(X2214005_JCC287_PC9_1d_rel_GEX.flt.srt)), ]
+X2214005_JCC287_PC9_1d_rel_GEX.flt.srt &lt;- X2214005_JCC287_PC9_1d_rel_GEX.flt.srt[!grepl(&quot;FTL&quot;, rownames(X2214005_JCC287_PC9_1d_rel_GEX.flt.srt)), ]
+
+X2214005_JCC287_PC9_1d_rel_GEX.std.srt &lt;-
+  standard_preprocess(
+    X2214005_JCC287_PC9_1d_rel_GEX.flt.srt,
+    prefix = &quot;X2214005_JCC287_PC9_1d_rel_GEX.std&quot;
+  )</code></pre>
+</div>
+<div id="day-3" class="section level2" number="3.2">
+<h2><span class="header-section-number">3.2</span> Day 3</h2>
+<pre class="r"><code>X2214006_JCC287_PC9_3d_rel_GEX.srt &lt;-
+  Read10X_h5(filename = file.path(
+    SRM229845_LOCAL_CACHE_DIR, 
+    X2214006_JCC287_PC9_3d_rel_GEX.CR_OUT, 
+    &quot;outs&quot;,
+    &quot;filtered_feature_bc_matrix.h5&quot;
+  )) %&gt;%
+  CreateSeuratObject(counts = .,
+                     project = X2214006_JCC287_PC9_3d_rel_GEX.CR_OUT)
+
+# Add mito ratio, ribo ratio and alias
+X2214006_JCC287_PC9_3d_rel_GEX.srt &lt;- add_alias_meta(X2214006_JCC287_PC9_3d_rel_GEX.srt)
+
+# After tasting the thresholds
+nFeature_min &lt;- 1000
+nFeature_max &lt;- 10000
+mito_ratio &lt;- 20
+ribo_ratio &lt;- 0
+
+# Filtering 
+min_gene_cell_frac &lt;- 1.5e-3
+ncol(X2214006_JCC287_PC9_3d_rel_GEX.srt) * min_gene_cell_frac
+selected_c &lt;-
+  WhichCells(
+    X2214006_JCC287_PC9_3d_rel_GEX.srt,
+    expression = nFeature_RNA &gt; nFeature_min &amp;
+      nFeature_RNA &lt; nFeature_max
+  )
+selected_f &lt;-
+  rownames(X2214006_JCC287_PC9_3d_rel_GEX.srt)[Matrix::rowSums(X2214006_JCC287_PC9_3d_rel_GEX.srt) &gt; floor(ncol(X2214006_JCC287_PC9_3d_rel_GEX.srt) * min_gene_cell_frac)]
+
+
+X2214006_JCC287_PC9_3d_rel_GEX.flt.srt &lt;-
+  subset(X2214006_JCC287_PC9_3d_rel_GEX.srt,
+         features = selected_f,
+         cells = selected_c)
+
+X2214006_JCC287_PC9_3d_rel_GEX.flt.srt &lt;-
+  subset(X2214006_JCC287_PC9_3d_rel_GEX.flt.srt,
+         subset = mitoRatio &lt; mito_ratio &amp; riboRatio &gt; ribo_ratio)
+
+X2214006_JCC287_PC9_3d_rel_GEX.flt.srt[!grepl(&quot;MALAT1&quot;, rownames(X2214006_JCC287_PC9_3d_rel_GEX.flt.srt)), ]
+X2214006_JCC287_PC9_3d_rel_GEX.flt.srt &lt;- X2214006_JCC287_PC9_3d_rel_GEX.flt.srt[!grepl(&quot;^MT-&quot;, rownames(X2214006_JCC287_PC9_3d_rel_GEX.flt.srt)), ]
+X2214006_JCC287_PC9_3d_rel_GEX.flt.srt &lt;- X2214006_JCC287_PC9_3d_rel_GEX.flt.srt[!grepl(&quot;^RP[SL]&quot;, rownames(X2214006_JCC287_PC9_3d_rel_GEX.flt.srt)), ]
+X2214006_JCC287_PC9_3d_rel_GEX.flt.srt &lt;- X2214006_JCC287_PC9_3d_rel_GEX.flt.srt[!grepl(&quot;FTH1&quot;, rownames(X2214006_JCC287_PC9_3d_rel_GEX.flt.srt)), ]
+X2214006_JCC287_PC9_3d_rel_GEX.flt.srt &lt;- X2214006_JCC287_PC9_3d_rel_GEX.flt.srt[!grepl(&quot;FTL&quot;, rownames(X2214006_JCC287_PC9_3d_rel_GEX.flt.srt)), ]
+
+X2214006_JCC287_PC9_3d_rel_GEX.std.srt &lt;-
+  standard_preprocess(
+    X2214006_JCC287_PC9_3d_rel_GEX.flt.srt,
+    prefix = &quot;X2214006_JCC287_PC9_3d_rel_GEX.std&quot;
+  )</code></pre>
+</div>
+<div id="week-1" class="section level2" number="3.3">
+<h2><span class="header-section-number">3.3</span> Week 1</h2>
+<pre class="r"><code>X2214007_JCC287_PC9_1w_rel_GEX.srt &lt;-
+  Read10X_h5(filename = file.path(
+    SRM229845_LOCAL_CACHE_DIR, 
+    X2214007_JCC287_PC9_1w_rel_GEX.CR_OUT, 
+    &quot;outs&quot;,
+    &quot;filtered_feature_bc_matrix.h5&quot;
+  )) %&gt;%
+  CreateSeuratObject(counts = .,
+                     project = X2214007_JCC287_PC9_1w_rel_GEX.CR_OUT)
+
+# Add mito ratio, ribo ratio and alias
+X2214007_JCC287_PC9_1w_rel_GEX.srt &lt;- add_alias_meta(X2214007_JCC287_PC9_1w_rel_GEX.srt)
+
+# After tasting the thresholds
+nFeature_min &lt;- 1500
+nFeature_max &lt;- 9500
+mito_ratio &lt;- 20
+ribo_ratio &lt;- 0
+
+# Filtering 
+min_gene_cell_frac &lt;- 1.5e-3
+ncol(X2214007_JCC287_PC9_1w_rel_GEX.srt) * min_gene_cell_frac
+selected_c &lt;-
+  WhichCells(
+    X2214007_JCC287_PC9_1w_rel_GEX.srt,
+    expression = nFeature_RNA &gt; nFeature_min &amp;
+      nFeature_RNA &lt; nFeature_max
+  )
+selected_f &lt;-
+  rownames(X2214007_JCC287_PC9_1w_rel_GEX.srt)[Matrix::rowSums(X2214007_JCC287_PC9_1w_rel_GEX.srt) &gt; floor(ncol(X2214007_JCC287_PC9_1w_rel_GEX.srt) * min_gene_cell_frac)]
+
+
+X2214007_JCC287_PC9_1w_rel_GEX.flt.srt &lt;-
+  subset(X2214007_JCC287_PC9_1w_rel_GEX.srt,
+         features = selected_f,
+         cells = selected_c)
+
+X2214007_JCC287_PC9_1w_rel_GEX.flt.srt &lt;-
+  subset(X2214007_JCC287_PC9_1w_rel_GEX.flt.srt,
+         subset = mitoRatio &lt; mito_ratio &amp; riboRatio &gt; ribo_ratio)
+
+X2214007_JCC287_PC9_1w_rel_GEX.flt.srt[!grepl(&quot;MALAT1&quot;, rownames(X2214007_JCC287_PC9_1w_rel_GEX.flt.srt)), ]
+X2214007_JCC287_PC9_1w_rel_GEX.flt.srt &lt;- X2214007_JCC287_PC9_1w_rel_GEX.flt.srt[!grepl(&quot;^MT-&quot;, rownames(X2214007_JCC287_PC9_1w_rel_GEX.flt.srt)), ]
+X2214007_JCC287_PC9_1w_rel_GEX.flt.srt &lt;- X2214007_JCC287_PC9_1w_rel_GEX.flt.srt[!grepl(&quot;^RP[SL]&quot;, rownames(X2214007_JCC287_PC9_1w_rel_GEX.flt.srt)), ]
+X2214007_JCC287_PC9_1w_rel_GEX.flt.srt &lt;- X2214007_JCC287_PC9_1w_rel_GEX.flt.srt[!grepl(&quot;FTH1&quot;, rownames(X2214007_JCC287_PC9_1w_rel_GEX.flt.srt)), ]
+X2214007_JCC287_PC9_1w_rel_GEX.flt.srt &lt;- X2214007_JCC287_PC9_1w_rel_GEX.flt.srt[!grepl(&quot;FTL&quot;, rownames(X2214007_JCC287_PC9_1w_rel_GEX.flt.srt)), ]
+
+X2214007_JCC287_PC9_1w_rel_GEX.std.srt &lt;-
+  standard_preprocess(
+    X2214007_JCC287_PC9_1w_rel_GEX.flt.srt,
+    prefix = &quot;X2214007_JCC287_PC9_1w_rel_GEX.std&quot;
+  )</code></pre>
+</div>
+<div id="parentalmock" class="section level2" number="3.4">
+<h2><span class="header-section-number">3.4</span> Parental/Mock</h2>
+<pre class="r"><code>X2214004_JCC287_PC9_MOCK2_GEX.srt &lt;-
+  Read10X_h5(filename = file.path(
+    SRM229845_LOCAL_CACHE_DIR, 
+    X2214004_JCC287_PC9_MOCK2_GEX.CR_OUT, 
+    &quot;outs&quot;,
+    &quot;filtered_feature_bc_matrix.h5&quot;
+  )) %&gt;%
+  CreateSeuratObject(counts = .,
+                     project = X2214004_JCC287_PC9_MOCK2_GEX.CR_OUT)
+
+# Add mito ratio, ribo ratio and alias
+X2214004_JCC287_PC9_MOCK2_GEX.srt &lt;- add_alias_meta(X2214004_JCC287_PC9_MOCK2_GEX.srt)
+
+# After tasting the thresholds
+nFeature_min &lt;- 3500
+nFeature_max &lt;- 10000
+mito_ratio &lt;- 25
+ribo_ratio &lt;- 10
+
+# Filtering 
+min_gene_cell_frac &lt;- 1.5e-3
+ncol(X2214004_JCC287_PC9_MOCK2_GEX.srt) * min_gene_cell_frac
+selected_c &lt;-
+  WhichCells(
+    X2214004_JCC287_PC9_MOCK2_GEX.srt,
+    expression = nFeature_RNA &gt; nFeature_min &amp;
+      nFeature_RNA &lt; nFeature_max
+  )
+selected_f &lt;-
+  rownames(X2214004_JCC287_PC9_MOCK2_GEX.srt)[Matrix::rowSums(X2214004_JCC287_PC9_MOCK2_GEX.srt) &gt; floor(ncol(X2214004_JCC287_PC9_MOCK2_GEX.srt) * min_gene_cell_frac)]
+
+
+X2214004_JCC287_PC9_MOCK2_GEX.flt.srt &lt;-
+  subset(X2214004_JCC287_PC9_MOCK2_GEX.srt,
+         features = selected_f,
+         cells = selected_c)
+
+X2214004_JCC287_PC9_MOCK2_GEX.flt.srt &lt;-
+  subset(X2214004_JCC287_PC9_MOCK2_GEX.flt.srt,
+         subset = mitoRatio &lt; mito_ratio &amp; riboRatio &gt; ribo_ratio)
+
+X2214004_JCC287_PC9_MOCK2_GEX.flt.srt[!grepl(&quot;MALAT1&quot;, rownames(X2214004_JCC287_PC9_MOCK2_GEX.flt.srt)), ]
+X2214004_JCC287_PC9_MOCK2_GEX.flt.srt &lt;- X2214004_JCC287_PC9_MOCK2_GEX.flt.srt[!grepl(&quot;^MT-&quot;, rownames(X2214004_JCC287_PC9_MOCK2_GEX.flt.srt)), ]
+X2214004_JCC287_PC9_MOCK2_GEX.flt.srt &lt;- X2214004_JCC287_PC9_MOCK2_GEX.flt.srt[!grepl(&quot;^RP[SL]&quot;, rownames(X2214004_JCC287_PC9_MOCK2_GEX.flt.srt)), ]
+X2214004_JCC287_PC9_MOCK2_GEX.flt.srt &lt;- X2214004_JCC287_PC9_MOCK2_GEX.flt.srt[!grepl(&quot;FTH1&quot;, rownames(X2214004_JCC287_PC9_MOCK2_GEX.flt.srt)), ]
+X2214004_JCC287_PC9_MOCK2_GEX.flt.srt &lt;- X2214004_JCC287_PC9_MOCK2_GEX.flt.srt[!grepl(&quot;FTL&quot;, rownames(X2214004_JCC287_PC9_MOCK2_GEX.flt.srt)), ]
+
+X2214004_JCC287_PC9_MOCK2_GEX.std.srt &lt;-
+  standard_preprocess(
+    X2214004_JCC287_PC9_MOCK2_GEX.flt.srt,
+    prefix = &quot;X2214004_JCC287_PC9_MOCK2_GEX.std&quot;
+  )</code></pre>
+</div>
+</div>
+<div id="down-sampling-and-merge" class="section level1" number="4">
+<h1><span class="header-section-number">4</span> Down-sampling and merge</h1>
+<p>The samples at different time points have different number of cells. I down-sample the cells so that all time points have the same number.</p>
+<pre class="r"><code># Common genes
+lapply(list(
+  X2214004_JCC287_PC9_MOCK2_GEX.std.srt,
+  X2214005_JCC287_PC9_1d_rel_GEX.std.srt,
+  X2214006_JCC287_PC9_3d_rel_GEX.std.srt,
+  X2214007_JCC287_PC9_1w_rel_GEX.std.srt
+), rownames) %&gt;%
+  Reduce(f = intersect, x = .) -&gt; PC9_set6.common_genes
+save(PC9_set6.common_genes, file = file.path(PC9_SET6.RES, &quot;PC9_set6.common_genes.Rda&quot;))
+
+# Project name
+sapply(list(
+  X2214004_JCC287_PC9_MOCK2_GEX.std.srt,
+  X2214005_JCC287_PC9_1d_rel_GEX.std.srt,
+  X2214006_JCC287_PC9_3d_rel_GEX.std.srt,
+  X2214007_JCC287_PC9_1w_rel_GEX.std.srt
+), function(x) {
+  x@project.name
+}) -&gt; PC9_set6.proj_name
+
+# Min cell number
+lapply(list(
+  X2214004_JCC287_PC9_MOCK2_GEX.std.srt,
+  X2214005_JCC287_PC9_1d_rel_GEX.std.srt,
+  X2214006_JCC287_PC9_3d_rel_GEX.std.srt,
+  X2214007_JCC287_PC9_1w_rel_GEX.std.srt
+), ncol) %&gt;%
+  unlist() %&gt;%
+  min() -&gt; min_cell_counts
+
+
+# Cell barcode index
+set.seed(42)
+lapply(list(
+  X2214004_JCC287_PC9_MOCK2_GEX.std.srt,
+  X2214005_JCC287_PC9_1d_rel_GEX.std.srt,
+  X2214006_JCC287_PC9_3d_rel_GEX.std.srt,
+  X2214007_JCC287_PC9_1w_rel_GEX.std.srt
+), function(x) {
+  cell_num &lt;- ncol(x)
+  cell_idx &lt;- sample(1:cell_num, min_cell_counts, replace = FALSE)
+  cell_idx
+}) -&gt; PC9_set6.down_sample
+
+# Check
+lapply(PC9_set6.down_sample, length)
+
+save(PC9_set6.down_sample, file = file.path(PC9_SET6.RES, &quot;PC9_set6.down_sample.Rda&quot;))
+
+# Down-sampled and select common genes
+set.seed(42)
+lapply(list(
+  X2214004_JCC287_PC9_MOCK2_GEX.std.srt,
+  X2214005_JCC287_PC9_1d_rel_GEX.std.srt,
+  X2214006_JCC287_PC9_3d_rel_GEX.std.srt,
+  X2214007_JCC287_PC9_1w_rel_GEX.std.srt
+), function(x) {
+  cell_num &lt;- ncol(x)
+  cell_idx &lt;- sample(1:cell_num, min_cell_counts, replace = FALSE)
+  # Select common genes
+  x[PC9_set6.common_genes, cell_idx]
+}) -&gt; PC9_set6.srtLst
+
+lapply(PC9_set6.srtLst, colnames) -&gt; PC9_set6.down_sample.barcode
+names(PC9_set6.down_sample.barcode) &lt;- PC9_set6.proj_name
+
+# Check
+lapply(PC9_set6.srtLst, ncol)
+lapply(PC9_set6.srtLst, nrow)
+lapply(PC9_set6.down_sample.barcode, length)
+
+save(PC9_set6.down_sample.barcode, file = file.path(PC9_SET6.RES, &quot;PC9_set6.down_sample.barcode.Rda&quot;))
+
+# Clean
+save(
+  X2214004_JCC287_PC9_MOCK2_GEX.std.srt,
+  X2214005_JCC287_PC9_1d_rel_GEX.std.srt,
+  X2214006_JCC287_PC9_3d_rel_GEX.std.srt,
+  X2214007_JCC287_PC9_1w_rel_GEX.std.srt,
+  file = file.path(PC9_SET6.RES, &quot;samples4.std.srt.Rda&quot;)
+)
+
+rm(
+  X2214004_JCC287_PC9_MOCK2_GEX.std.srt,
+  X2214005_JCC287_PC9_1d_rel_GEX.std.srt,
+  X2214006_JCC287_PC9_3d_rel_GEX.std.srt,
+  X2214007_JCC287_PC9_1w_rel_GEX.std.srt
+)
+
+gc()</code></pre>
+<p>I merge and follow the standard processing regarding to Seurat documentation, assuming there is no batch effect since the experiments were carried out by the same person and on the same day.</p>
+<pre class="r"><code>PC9_set6.merge.srt &lt;- merge(
+  x = PC9_set6.srtLst[[1]],
+  y = c(
+    PC9_set6.srtLst[[2]],
+    PC9_set6.srtLst[[3]],
+    PC9_set6.srtLst[[4]]
+  ),
+  add.cell.ids = c(&quot;PT&quot;, &quot;PS1D&quot;, &quot;PS3D&quot;, &quot;PS7D&quot;),
+  project = &quot;PC9_set6_merge&quot;
+)
+
+# Add group
+PC9_set6.merge.srt %&gt;%
+  colnames() %&gt;%
+  stringr::str_remove(&quot;_[ACGT]+-[1-9]+$&quot;) %&gt;%
+  forcats::fct_relevel(., &quot;PS1D&quot;, &quot;PS3D&quot;, &quot;PS7D&quot;, &quot;PT&quot;) -&gt; Group
+PC9_set6.merge.srt[[&quot;Group&quot;]] &lt;- Group
+
+save(PC9_set6.merge.srt, file = file.path(PC9_SET6.RES, &quot;PC9_set6.merge.srt.Rda&quot;))
+
+# Clean
+rm(PC9_set6.srtLst)
+gc()
+
+# Standard preprocessing
+PC9_set6.merge.std.srt &lt;-
+  standard_preprocess.merge(
+    PC9_set6.merge.srt,
+    use_pre_cal_cell_cycle_scores = TRUE,
+    prefix = &quot;PC9_set6.merge.std&quot;,
+    Rda_file = file.path(PC9_SET6.RES, &quot;PC9_set6.merge.std.srt.Rda&quot;)
+  )
+
+PC9_set6.merge.std.meta &lt;- PC9_set6.merge.std.srt@meta.data
+
+save(
+  PC9_set6.merge.std.meta,
+  file = file.path(PC9_SET6.RES, &quot;PC9_set6.merge.std.meta.Rda&quot;)
+)</code></pre>
+</div>
+<div id="trajectory-analysis" class="section level1" number="5">
+<h1><span class="header-section-number">5</span> Trajectory analysis</h1>
+<div id="preparing-the-umap" class="section level2" number="5.1">
+<h2><span class="header-section-number">5.1</span> Preparing the UMAP</h2>
+<p>UMAP with the default parameters do not have obvious trajectories, I tune the parameters as the author of Slingshot suggested. Alternatively, other dimensional reduction method can be used.</p>
+<pre class="r"><code># Choose a = 200, b = 0.4
+PC9_set6.merge.std.srt &lt;-
+  RunUMAP(PC9_set6.merge.std.srt,
+          dims = RunUMAP.DIMS,
+          a = 200,
+          b = 0.4,
+          verbose = TRUE)
+gc()
+
+PC9_set6.merge.std.a200.b0.4.umap &lt;- PC9_set6.merge.std.srt@reductions$umap
+save(PC9_set6.merge.std.a200.b0.4.umap, file = file.path(PC9_SET6.RES, &quot;PC9_set6.merge.std.a200.b0.4.umap.Rda&quot;))
+
+forcats::fct_relevel(PC9_set6.merge.std.srt$Group, &quot;PS1D&quot;, &quot;PS3D&quot;, &quot;PS7D&quot;, &quot;PT&quot;) -&gt; PC9_set6.merge.std.group.fct
+
+levels(PC9_set6.merge.std.group.fct)
+PC9_set6.merge.std.srt$Group &lt;- PC9_set6.merge.std.group.fct
+Idents(PC9_set6.merge.std.srt) &lt;- &quot;Group&quot;
+PC9_set6.merge.std.group_size &lt;- unique(PC9_set6.merge.std.srt$Group) %&gt;%
+  length()
+PC9_set6.merge.std.group.pal &lt;- ggsci_pal_d(ggsci_pal_name = &quot;jco&quot;, pal_size = PC9_set6.merge.std.group_size)
+
+save(PC9_set6.merge.std.group.pal, PC9_set6.merge.std.group_size, file = file.path(PC9_SET6.RES, &quot;PC9_set6.merge.std.group.pal.Rda&quot;))</code></pre>
+</div>
+<div id="trajectory-analysis-using-slingshot" class="section level2" number="5.2">
+<h2><span class="header-section-number">5.2</span> Trajectory analysis using Slingshot</h2>
+<pre class="r"><code>gc()
+DefaultAssay(PC9_set6.merge.std.srt) &lt;- &quot;RNA&quot;
+
+PC9_set6.merge.std.srt@meta.data %&gt;%
+  colnames() %&gt;%
+  grep(pattern = &quot;^sling&quot;, x = ., value = TRUE)
+
+PC9_set6.merge.std.sce &lt;-
+  as.SingleCellExperiment(x = PC9_set6.merge.std.srt, assay = &quot;RNA&quot;)
+PC9_set6.merge.std.sce@colData %&gt;%
+  colnames() %&gt;%
+  grep(pattern = &quot;^sling&quot;, x = ., value = TRUE)
+
+rd_method &lt;- &quot;UMAP&quot;
+approx_pt &lt;- 150
+
+library(slingshot)
+library(SingleCellExperiment)
+
+# Run
+PC9_set6.merge.std.sce &lt;-
+  slingshot(
+    PC9_set6.merge.std.sce,
+    reducedDim = rd_method,
+    clusterLabels = PC9_set6.merge.std.sce$Group,
+    start.clus = &quot;PS1D&quot;,
+    # end.clus = &quot;PS7D&quot;,
+    approx_points = approx_pt
+  )
+gc()
+
+# Add to Seurat object
+PC9_set6.merge.std.sce@colData %&gt;%
+  colnames() %&gt;%
+  grep(pattern = &quot;^sling&quot;, x = ., value = TRUE) -&gt; slingshot_res_colnames
+slingshot_res_colnames
+for (cn in slingshot_res_colnames) {
+  message(cn)
+  PC9_set6.merge.std.srt[[cn]] &lt;- PC9_set6.merge.std.sce@colData[, cn]
+}</code></pre>
+<pre class="r"><code># Plot
+## UMAP by group
+table(PC9_set6.merge.std.srt$Group == &quot;PT&quot;)
+PT_barcode &lt;- colnames(PC9_set6.merge.std.srt)[PC9_set6.merge.std.srt$Group == &quot;PT&quot;]
+DimPlot(
+  PC9_set6.merge.std.srt,
+  reduction = &quot;umap&quot;,
+  group.by = &quot;Group&quot;,
+  label = FALSE,
+  # order = PT_barcode,
+  shuffle = TRUE,
+  cols = PC9_set6.merge.std.group.pal
+) +
+  # scale_size_manual(values = c(0.5, 0.5, 0.5, 4), breaks = levels(group.fct)) +
+  ggtitle(&quot;UMAP&quot;) +
+  labs(x = &quot;UMAP 1&quot;, y = &quot;UMAP 2&quot;) +
+  theme(title = element_text(size = 10)) -&gt; PC9_set6.merge.std.groupByGroup.umap
+
+# Add trajectories
+PC9_set6.merge.std.traj_num &lt;- length(slingshot_res_colnames) - 1
+PC9_set6.merge.std.traj.pal &lt;-
+  ggsci_pal_d(ggsci_pal_name = &quot;aaas&quot;, pal_size = PC9_set6.merge.std.traj_num)
+lapply(1:PC9_set6.merge.std.traj_num, function(i) {
+  message(glue(&quot;Trajectory {i}&quot;))
+  PC9_set6.RNA.slingshot_curvei_coord.df &lt;-
+    slingCurves(PC9_set6.merge.std.sce)[[i]]$s[slingCurves(PC9_set6.merge.std.sce)[[i]]$ord,] %&gt;%
+    as.data.frame()
+  PC9_set6.merge.std.groupByGroup.umap +
+    ggplot2::geom_path(
+      data = PC9_set6.RNA.slingshot_curvei_coord.df,
+      aes(x = UMAP_1, y = UMAP_2),
+      size = 1.5,
+      color = PC9_set6.merge.std.traj.pal[i],
+      arrow = arrow(angle = 30)
+    ) +
+    labs(x = &quot;UMAP 1&quot;, y = &quot;UMAP 2&quot;) +
+    theme_bw() +
+    theme(
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.background = element_blank()
+    ) -&gt;&gt; PC9_set6.merge.std.groupByGroup.umap
+}) %&gt;%
+  invisible()
+
+# Add caption and save
+PC9_set6.merge.std.groupByGroup.umap +
+  plot_annotation(
+    title = &quot;Trajectory&quot;,
+    subtitle = glue(&quot;Slingshot trajectories&quot;),
+    caption = glue(
+      &quot;Regress out cell cycle (S and G2M scores), proportion of reads mapped to mitochondrial,
+    gene number per cell.
+    Dim=40 without specific mention.
+    Trajectory: Slingshot, start from PS, approx_points = {approx_pt}, integrated assay, {rd_method} project.&quot;
+    ),
+    theme = theme(
+      title = element_text(size = 12, face = &quot;bold&quot;),
+      plot.caption = element_text(size = 9,
+                                  hjust = 0,
+                                  face = &quot;plain&quot;)
+    )
+  ) -&gt; PC9_set6.merge.std.groupByGroup.umap.comb
+ggsave(
+  plot = PC9_set6.merge.std.groupByGroup.umap.comb,
+  filename = file.path(
+    PC9_SET6.RES,
+    glue(&quot;PC9_set6.merge.std.Slingshot.groupByGroup.umap.comb.pdf&quot;)
+  ),
+  height = 5.6,
+  width = 5
+)</code></pre>
+<pre class="r"><code># plot(PC9_set6.merge.std.srt$slingPseudotime_1, PC9_set6.merge.std.srt$slingPseudotime_2)
+## Combine UMAPs by trajectory
+PC9_set6.merge.std.traj_num &lt;- length(slingshot_res_colnames) - 1
+lapply(1:PC9_set6.merge.std.traj_num, function(i) {
+  message(glue(&quot;Trajectory {i}&quot;))
+  feat_name &lt;- paste0(&quot;slingPseudotime_&quot;, i)
+  PC9_set6.RNA.slingshot_curvei_coord.df &lt;-
+    slingCurves(PC9_set6.merge.std.sce)[[i]]$s[slingCurves(PC9_set6.merge.std.sce)[[i]]$ord, ] %&gt;%
+    as.data.frame()
+  FeaturePlot(
+    PC9_set6.merge.std.srt,
+    reduction = &quot;umap&quot;,
+    features = feat_name,
+    cols = viridis_pal(begin = 0.1, end = 0.9)(2),
+    combine = FALSE
+  ) %&gt;%
+    lapply(., function(p) {
+      p +
+        lims(x = c(-0.25, 0.25), y = c(-0.25, 0.25)) +
+        ggplot2::geom_path(
+          data = PC9_set6.RNA.slingshot_curvei_coord.df,
+          aes(x = UMAP_1, y = UMAP_2),
+          size = 1.5,
+          color = PC9_set6.merge.std.traj.pal[i],
+          arrow = arrow(angle = 30)
+        ) +
+        labs(x = &quot;UMAP 1&quot;, y = &quot;UMAP 2&quot;) +
+        theme_bw() +
+        theme(
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank()
+        )
+    }) -&gt; PC9_set6.merge.std.pseudotime.umap
+  ## Pseudotime UMAP by group
+  FeaturePlot(
+    PC9_set6.merge.std.srt,
+    reduction = &quot;umap&quot;,
+    features = feat_name,
+    cols = viridis_pal(begin = 0.1, end = 0.9)(2),
+    split.by = &quot;Group&quot;,
+    combine = FALSE
+  ) %&gt;%
+    lapply(., function(p) {
+      p +
+        lims(x = c(-0.25, 0.25), y = c(-0.25, 0.25)) +
+        ggplot2::geom_path(
+          data = PC9_set6.RNA.slingshot_curvei_coord.df,
+          aes(x = UMAP_1, y = UMAP_2),
+          size = 1.5,
+          color = PC9_set6.merge.std.traj.pal[i],
+          arrow = arrow(angle = 30)
+        ) +
+        labs(x = &quot;UMAP 1&quot;, y = &quot;UMAP 2&quot;) +
+        theme_bw() +
+        theme(
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank()
+        )
+    }) -&gt; umapLst
+  umapLst$Pseudotime &lt;- PC9_set6.merge.std.pseudotime.umap[[1]]
+  umapLst2 &lt;- list(
+    Group = PC9_set6.merge.std.groupByGroup.umap,
+    Pseudotime = umapLst$Pseudotime + ggtitle(&quot;Pseudotime&quot;),
+    PS1D = umapLst[[1]] + ggtitle(&quot;PS1D&quot;),
+    PS3D = umapLst[[2]] + ggtitle(&quot;PS3D&quot;),
+    PS7D = umapLst[[3]] + ggtitle(&quot;PS7D&quot;),
+    PT = umapLst[[4]] + ggtitle(&quot;PT&quot;)
+  )
+  
+  wrap_plots(umapLst2, nrow = 2) +
+    plot_annotation(
+      title = &quot;Trajectory&quot;,
+      subtitle = glue(&quot;Slingshot trajectory {i}&quot;),
+      caption = glue(
+        &quot;Regress out cell cycle (S and G2M scores), proportion of reads mapped to mitochondrial,
+    gene number per cell.
+    Dim=40 without specific mention.
+    Trajectory: Slingshot, start clusters PS, end cluster not specified, approx_points = {approx_pt}, integrated assay, {rd_method} project.&quot;
+      ),
+    theme = theme(
+      title = element_text(size = 12, face = &quot;bold&quot;),
+      plot.caption = element_text(
+        size = 9,
+        hjust = 0,
+        face = &quot;plain&quot;
+      )
+    )
+    ) -&gt; PC9_set6.Slingshot.umaps
+  ggsave(
+    plot = PC9_set6.Slingshot.umaps,
+    filename = file.path(
+      PC9_SET6.RES,
+      glue(&quot;PC9_set6.Slingshot_trajectory{i}.umaps.pdf&quot;)
+    ),
+    height = 4.0 * 2,
+    width = 4.5 * 3
+  )
+}) -&gt; PC9_set6.merge.std.umaps</code></pre>
+<pre class="r"><code># Pseudotime density
+PC9_set6.merge.std.meta.df &lt;- PC9_set6.merge.std.srt@meta.data
+
+PC9_set6.merge.std.traj_num &lt;- length(slingshot_res_colnames) - 1
+lapply(1:PC9_set6.merge.std.traj_num, function(i) {
+  message(glue(&quot;Trajectory {i}&quot;))
+  feat_name &lt;- paste0(&quot;slingPseudotime_&quot;, i)
+  df &lt;- PC9_set6.merge.std.meta.df[, c(&quot;Group&quot;, feat_name)]
+  colnames(df) &lt;- c(&quot;Group&quot;, &quot;Pseudotime&quot;)
+  ggplot(df,
+         aes(x = Pseudotime, group = Group)) +
+    geom_density(aes(fill = Group, color = Group), alpha = 0.5) +
+    scale_fill_manual(values = PC9_set6.merge.std.group.pal) +
+    scale_color_manual(values = PC9_set6.merge.std.group.pal) +
+    labs(x = &quot;Pseudotime&quot;, y = &quot;Density&quot;) +
+    facet_grid(Group ~ ., scales = &quot;fixed&quot;) +
+    ggtitle(glue(&quot;Trajectory {i}&quot;)) +
+    theme_bw() +
+    ggplot2::theme(
+      legend.position = &quot;none&quot;,
+      axis.title.x = element_text(size = 7, face = &quot;bold&quot;),
+      # axis.ticks.x = element_blank(),
+      axis.title.y = element_text(size = 7, face = &quot;bold&quot;),
+      axis.text.y = element_text(size = 6),
+      strip.background.y = element_rect(fill = &quot;grey20&quot;),
+      strip.text.y = element_text(
+        angle = 0,
+        face = &quot;bold&quot;,
+        size = 7,
+        color = &quot;grey90&quot;
+      ),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.background = element_blank()
+    ) -&gt; PC9_set6.Slingshot.track
+}) -&gt; PC9_set6.Slingshot.tracks
+
+wrap_plots(PC9_set6.Slingshot.tracks, nrow = 1) +
+  plot_annotation(
+    title = &quot;Trajectory analysis&quot;,
+    subtitle = glue(&quot;Slingshot&quot;),
+    caption = glue(
+        &quot;Regress out cell cycle (S and G2M scores), proportion of reads mapped to mitochondrial,
+    gene number per cell.
+    Dim=40 without specific mention.
+    Trajectory: Slingshot, start clusters PS, end cluster not specified, approx_points = {approx_pt}, integrated assay, {rd_method} project.&quot;
+      ),
+    theme = theme(
+      title = element_text(size = 12, face = &quot;bold&quot;),
+      plot.caption = element_text(size = 9,
+                                  hjust = 0,
+                                  face = &quot;plain&quot;)
+    )
+  ) -&gt; PC9_set6.Slingshot.tracks.comb
+  
+ggsave(
+    plot = PC9_set6.Slingshot.tracks.comb,
+    filename = file.path(PC9_SET6.RES, &quot;PC9_set6.Slingshot.tracks.comb.pdf&quot;),
+    height = 0.8 * PC9_set6.merge.std.group_size + 2,
+    width = 3 * length(PC9_set6.Slingshot.tracks)
+  )</code></pre>
+</div>
+</div>
+<div id="trajectory-based-differential-expression-analysis" class="section level1" number="6">
+<h1><span class="header-section-number">6</span> Trajectory-based differential expression analysis</h1>
+<pre class="r"><code>library(tradeSeq)
+
+# Fit GAM (very slow, takes 1 hour 12 min)
+library(BiocParallel)
+registered()
+bpparam &lt;- MulticoreParam(workers = multicoreWorkers())
+GAM_nknots &lt;- 6
+set.seed(42)
+start_time &lt;- Sys.time()
+BiocParallel::register(bpparam)
+PC9_set6.merge.std.RNA.sce &lt;-
+  as.SingleCellExperiment(PC9_set6.merge.std.srt, assay = &quot;RNA&quot;)
+PC9_set6.merge.std.RNA.sce &lt;-
+  fitGAM(
+    counts = GetAssayData(PC9_set6.merge.std.srt, slot = &quot;count&quot;, assay = &quot;RNA&quot;),
+    sds = SlingshotDataSet(PC9_set6.merge.std.sce),
+    nknots = GAM_nknots
+  )
+end_time &lt;- Sys.time()
+BiocParallel::register(BiocParallel::SerialParam())
+gc()
+
+save(
+  PC9_set6.merge.std.RNA.sce,
+  start_time,
+  end_time,
+  file = file.path(
+    PC9_SET6.RES,
+    &quot;PC9_set6.merge.std.RNA.sce.Rda&quot;
+  )
+)
+
+# Within-lineage comparisons: Association of gene expression with pseudotime
+PC9_set6.merge.std.tradeSeq.assoTestRes &lt;-
+  associationTest(PC9_set6.merge.std.RNA.sce,
+                  lineages = TRUE,
+                  l2fc = TRADESEQ.ASSOTEST.LFC_MIN)
+
+# DEGs filter
+PC9_set6.merge.std.tradeSeq.assoTest.feat_idx &lt;-
+  which(p.adjust(PC9_set6.merge.std.tradeSeq.assoTestRes$pvalue, &quot;fdr&quot;) &lt;= TRADESEQ.ASSOTEST.FDR_MAX)
+PC9_set6.merge.std.tradeSeq.assoTest.gene_symbols &lt;-
+  rownames(PC9_set6.merge.std.tradeSeq.assoTestRes)[PC9_set6.merge.std.tradeSeq.assoTest.feat_idx]
+
+# Save in Excel
+PC9_set6.merge.std.tradeSeq.assoTestRes %&gt;%
+  tibble::rownames_to_column(., var = &quot;Gene_symbol&quot;) %&gt;%
+  dplyr::mutate(FDR = p.adjust(pvalue, &quot;fdr&quot;)) %&gt;%
+  dplyr::arrange(pvalue) -&gt; PC9_set6.merge.std.tradeSeq.asso.df
+
+PC9_set6.merge.std.tradeSeq.asso.df %&gt;%
+  dplyr::filter(FDR &lt; TRADESEQ.ASSOTEST.FDR_MAX) -&gt; PC9_set6.merge.std.tradeSeq.asso.flt.df
+
+filter_spreadsheet_name &lt;- glue(&quot;FDR {TRADESEQ.ASSOTEST.FDR_MAX}&quot;)
+wb &lt;- createWorkbook()
+addWorksheet(wb, &quot;All&quot;)
+writeData(wb, &quot;All&quot;, PC9_set6.merge.std.tradeSeq.asso.df)
+addWorksheet(wb, filter_spreadsheet_name)
+writeData(wb, filter_spreadsheet_name, PC9_set6.merge.std.tradeSeq.asso.flt.df)
+saveWorkbook(
+  wb,
+  file = file.path(
+    PC9_SET6.RES,
+    &quot;PC9_set6.merge.std.tradeSeq.assoTest.xlsx&quot;
+  ),
+  overwrite = TRUE
+)
+
+save(
+  TRADESEQ.ASSOTEST.LFC_MIN,
+  TRADESEQ.ASSOTEST.FDR_MAX,
+  PC9_set6.merge.std.tradeSeq.assoTestRes,
+  PC9_set6.merge.std.tradeSeq.assoTest.feat_idx,
+  PC9_set6.merge.std.tradeSeq.assoTest.gene_symbols,
+  PC9_set6.merge.std.tradeSeq.asso.df,
+  PC9_set6.merge.std.tradeSeq.asso.flt.df,
+  file = file.path(
+    PC9_SET6.RES,
+    &quot;PC9_set6.merge.std.tradeSeq.assoTest.Rda&quot;
+  )
+)</code></pre>
+<br>
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
+<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span> Session information
+</button>
+</p>
+<div id="workflowr-sessioninfo" class="collapse">
+<pre class="r"><code>sessionInfo()</code></pre>
+</div>
+</div>
+
+
+<!-- Adjust MathJax settings so that all math formulae are shown using
+TeX fonts only; see
+http://docs.mathjax.org/en/latest/configuration.html.  This will make
+the presentation more consistent at the cost of the webpage sometimes
+taking slightly longer to load. Note that this only works because the
+footer is added to webpages before the MathJax javascript. -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
