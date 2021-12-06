@@ -1,0 +1,830 @@
+---
+title: "PC9 time course"
+output:
+  workflowr::wflow_html:
+    toc: true
+    number_sections: true
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup-PC9-time-course, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval=FALSE)
+```
+
+# Data
+
+You can download filtered feature-barcode matrices in HDF5 format from GEO database (GSE189639). The script here suppose an organization of files as below:
+
+```
+2214004_JCC287_PC9_MOCK2_GEX/outs/filtered_feature_bc_matrix.h5
+2214005_JCC287_PC9_1d_rel_GEX/outs/filtered_feature_bc_matrix.h5
+2214006_JCC287_PC9_3d_rel_GEX/outs/filtered_feature_bc_matrix.h5
+2214007_JCC287_PC9_1w_rel_GEX/outs/filtered_feature_bc_matrix.h5
+```
+
+
+# Load packages, functions and default parameters
+
+```{r load-pkg-func-param}
+source("code/param_pkg_func.scRNA.R")
+```
+
+# QC and preprocess of individual samples
+
+Basic steps:
+
+1. Create Seurat object from raw data.
+1. Quality control:
+    1. Taste the threshold to filter low quality cells using genes per cell, percentage of reads mapped to mitochondrial genes and/or ribosomal protein genes. The genes present in very few cells are also excluded.
+    1. Genes expressed at extremely high level, such as mitochondrial genes or ribosomal protein genes, are also excluded.
+1. Preprocessing following Seurat documentation, particularly vignettes [Guided Clustering Tutorial](https://satijalab.org/seurat/articles/pbmc3k_tutorial.html) and [Cell-Cycle Scoring and Regression](https://satijalab.org/seurat/articles/cell_cycle_vignette.html).
+
+
+```{r raw-data}
+# Path to raw data
+# Change to your folder if needed
+SRM229845_LOCAL_CACHE_DIR <- "/Users/jchen4/Cache/MC015_Persister/result/SRM229845/"
+X2214004_JCC287_PC9_MOCK2_GEX.CR_OUT <- "2214004_JCC287_PC9_MOCK2_GEX"
+X2214005_JCC287_PC9_1d_rel_GEX.CR_OUT <- "2214005_JCC287_PC9_1d_rel_GEX"
+X2214006_JCC287_PC9_3d_rel_GEX.CR_OUT <- "2214006_JCC287_PC9_3d_rel_GEX"
+X2214007_JCC287_PC9_1w_rel_GEX.CR_OUT <- "2214007_JCC287_PC9_1w_rel_GEX"
+
+PC9_SET6.RES <- here::here("output/PC9_set6")
+if (!dir.exists(PC9_SET6.RES)) dir.create(PC9_SET6.RES, recursive = TRUE)
+```
+
+## Day 1
+
+```{r preproc-D1}
+X2214005_JCC287_PC9_1d_rel_GEX.srt <-
+  Read10X_h5(filename = file.path(
+    SRM229845_LOCAL_CACHE_DIR, 
+    X2214005_JCC287_PC9_1d_rel_GEX.CR_OUT, 
+    "outs",
+    "filtered_feature_bc_matrix.h5"
+  )) %>%
+  CreateSeuratObject(counts = .,
+                     project = X2214005_JCC287_PC9_1d_rel_GEX.CR_OUT)
+
+# Add mito ratio, ribo ratio and alias
+X2214005_JCC287_PC9_1d_rel_GEX.srt <- add_alias_meta(X2214005_JCC287_PC9_1d_rel_GEX.srt)
+
+# After tasting the thresholds
+nFeature_min <- 1000
+nFeature_max <- 10000
+mito_ratio <- 10
+ribo_ratio <- 0
+
+# Filtering 
+min_gene_cell_frac <- 1.5e-3
+ncol(X2214005_JCC287_PC9_1d_rel_GEX.srt) * min_gene_cell_frac
+selected_c <-
+  WhichCells(
+    X2214005_JCC287_PC9_1d_rel_GEX.srt,
+    expression = nFeature_RNA > nFeature_min &
+      nFeature_RNA < nFeature_max
+  )
+selected_f <-
+  rownames(X2214005_JCC287_PC9_1d_rel_GEX.srt)[Matrix::rowSums(X2214005_JCC287_PC9_1d_rel_GEX.srt) > floor(ncol(X2214005_JCC287_PC9_1d_rel_GEX.srt) * min_gene_cell_frac)]
+
+
+X2214005_JCC287_PC9_1d_rel_GEX.flt.srt <-
+  subset(X2214005_JCC287_PC9_1d_rel_GEX.srt,
+         features = selected_f,
+         cells = selected_c)
+
+X2214005_JCC287_PC9_1d_rel_GEX.flt.srt <-
+  subset(X2214005_JCC287_PC9_1d_rel_GEX.flt.srt,
+         subset = mitoRatio < mito_ratio & riboRatio > ribo_ratio)
+
+X2214005_JCC287_PC9_1d_rel_GEX.flt.srt[!grepl("MALAT1", rownames(X2214005_JCC287_PC9_1d_rel_GEX.flt.srt)), ]
+X2214005_JCC287_PC9_1d_rel_GEX.flt.srt <- X2214005_JCC287_PC9_1d_rel_GEX.flt.srt[!grepl("^MT-", rownames(X2214005_JCC287_PC9_1d_rel_GEX.flt.srt)), ]
+X2214005_JCC287_PC9_1d_rel_GEX.flt.srt <- X2214005_JCC287_PC9_1d_rel_GEX.flt.srt[!grepl("^RP[SL]", rownames(X2214005_JCC287_PC9_1d_rel_GEX.flt.srt)), ]
+X2214005_JCC287_PC9_1d_rel_GEX.flt.srt <- X2214005_JCC287_PC9_1d_rel_GEX.flt.srt[!grepl("FTH1", rownames(X2214005_JCC287_PC9_1d_rel_GEX.flt.srt)), ]
+X2214005_JCC287_PC9_1d_rel_GEX.flt.srt <- X2214005_JCC287_PC9_1d_rel_GEX.flt.srt[!grepl("FTL", rownames(X2214005_JCC287_PC9_1d_rel_GEX.flt.srt)), ]
+
+X2214005_JCC287_PC9_1d_rel_GEX.std.srt <-
+  standard_preprocess(
+    X2214005_JCC287_PC9_1d_rel_GEX.flt.srt,
+    prefix = "X2214005_JCC287_PC9_1d_rel_GEX.std"
+  )
+```
+
+## Day 3
+
+```{r preproc-D3}
+X2214006_JCC287_PC9_3d_rel_GEX.srt <-
+  Read10X_h5(filename = file.path(
+    SRM229845_LOCAL_CACHE_DIR, 
+    X2214006_JCC287_PC9_3d_rel_GEX.CR_OUT, 
+    "outs",
+    "filtered_feature_bc_matrix.h5"
+  )) %>%
+  CreateSeuratObject(counts = .,
+                     project = X2214006_JCC287_PC9_3d_rel_GEX.CR_OUT)
+
+# Add mito ratio, ribo ratio and alias
+X2214006_JCC287_PC9_3d_rel_GEX.srt <- add_alias_meta(X2214006_JCC287_PC9_3d_rel_GEX.srt)
+
+# After tasting the thresholds
+nFeature_min <- 1000
+nFeature_max <- 10000
+mito_ratio <- 20
+ribo_ratio <- 0
+
+# Filtering 
+min_gene_cell_frac <- 1.5e-3
+ncol(X2214006_JCC287_PC9_3d_rel_GEX.srt) * min_gene_cell_frac
+selected_c <-
+  WhichCells(
+    X2214006_JCC287_PC9_3d_rel_GEX.srt,
+    expression = nFeature_RNA > nFeature_min &
+      nFeature_RNA < nFeature_max
+  )
+selected_f <-
+  rownames(X2214006_JCC287_PC9_3d_rel_GEX.srt)[Matrix::rowSums(X2214006_JCC287_PC9_3d_rel_GEX.srt) > floor(ncol(X2214006_JCC287_PC9_3d_rel_GEX.srt) * min_gene_cell_frac)]
+
+
+X2214006_JCC287_PC9_3d_rel_GEX.flt.srt <-
+  subset(X2214006_JCC287_PC9_3d_rel_GEX.srt,
+         features = selected_f,
+         cells = selected_c)
+
+X2214006_JCC287_PC9_3d_rel_GEX.flt.srt <-
+  subset(X2214006_JCC287_PC9_3d_rel_GEX.flt.srt,
+         subset = mitoRatio < mito_ratio & riboRatio > ribo_ratio)
+
+X2214006_JCC287_PC9_3d_rel_GEX.flt.srt[!grepl("MALAT1", rownames(X2214006_JCC287_PC9_3d_rel_GEX.flt.srt)), ]
+X2214006_JCC287_PC9_3d_rel_GEX.flt.srt <- X2214006_JCC287_PC9_3d_rel_GEX.flt.srt[!grepl("^MT-", rownames(X2214006_JCC287_PC9_3d_rel_GEX.flt.srt)), ]
+X2214006_JCC287_PC9_3d_rel_GEX.flt.srt <- X2214006_JCC287_PC9_3d_rel_GEX.flt.srt[!grepl("^RP[SL]", rownames(X2214006_JCC287_PC9_3d_rel_GEX.flt.srt)), ]
+X2214006_JCC287_PC9_3d_rel_GEX.flt.srt <- X2214006_JCC287_PC9_3d_rel_GEX.flt.srt[!grepl("FTH1", rownames(X2214006_JCC287_PC9_3d_rel_GEX.flt.srt)), ]
+X2214006_JCC287_PC9_3d_rel_GEX.flt.srt <- X2214006_JCC287_PC9_3d_rel_GEX.flt.srt[!grepl("FTL", rownames(X2214006_JCC287_PC9_3d_rel_GEX.flt.srt)), ]
+
+X2214006_JCC287_PC9_3d_rel_GEX.std.srt <-
+  standard_preprocess(
+    X2214006_JCC287_PC9_3d_rel_GEX.flt.srt,
+    prefix = "X2214006_JCC287_PC9_3d_rel_GEX.std"
+  )
+```
+
+## Week 1
+
+```{r preproc-W1}
+X2214007_JCC287_PC9_1w_rel_GEX.srt <-
+  Read10X_h5(filename = file.path(
+    SRM229845_LOCAL_CACHE_DIR, 
+    X2214007_JCC287_PC9_1w_rel_GEX.CR_OUT, 
+    "outs",
+    "filtered_feature_bc_matrix.h5"
+  )) %>%
+  CreateSeuratObject(counts = .,
+                     project = X2214007_JCC287_PC9_1w_rel_GEX.CR_OUT)
+
+# Add mito ratio, ribo ratio and alias
+X2214007_JCC287_PC9_1w_rel_GEX.srt <- add_alias_meta(X2214007_JCC287_PC9_1w_rel_GEX.srt)
+
+# After tasting the thresholds
+nFeature_min <- 1500
+nFeature_max <- 9500
+mito_ratio <- 20
+ribo_ratio <- 0
+
+# Filtering 
+min_gene_cell_frac <- 1.5e-3
+ncol(X2214007_JCC287_PC9_1w_rel_GEX.srt) * min_gene_cell_frac
+selected_c <-
+  WhichCells(
+    X2214007_JCC287_PC9_1w_rel_GEX.srt,
+    expression = nFeature_RNA > nFeature_min &
+      nFeature_RNA < nFeature_max
+  )
+selected_f <-
+  rownames(X2214007_JCC287_PC9_1w_rel_GEX.srt)[Matrix::rowSums(X2214007_JCC287_PC9_1w_rel_GEX.srt) > floor(ncol(X2214007_JCC287_PC9_1w_rel_GEX.srt) * min_gene_cell_frac)]
+
+
+X2214007_JCC287_PC9_1w_rel_GEX.flt.srt <-
+  subset(X2214007_JCC287_PC9_1w_rel_GEX.srt,
+         features = selected_f,
+         cells = selected_c)
+
+X2214007_JCC287_PC9_1w_rel_GEX.flt.srt <-
+  subset(X2214007_JCC287_PC9_1w_rel_GEX.flt.srt,
+         subset = mitoRatio < mito_ratio & riboRatio > ribo_ratio)
+
+X2214007_JCC287_PC9_1w_rel_GEX.flt.srt[!grepl("MALAT1", rownames(X2214007_JCC287_PC9_1w_rel_GEX.flt.srt)), ]
+X2214007_JCC287_PC9_1w_rel_GEX.flt.srt <- X2214007_JCC287_PC9_1w_rel_GEX.flt.srt[!grepl("^MT-", rownames(X2214007_JCC287_PC9_1w_rel_GEX.flt.srt)), ]
+X2214007_JCC287_PC9_1w_rel_GEX.flt.srt <- X2214007_JCC287_PC9_1w_rel_GEX.flt.srt[!grepl("^RP[SL]", rownames(X2214007_JCC287_PC9_1w_rel_GEX.flt.srt)), ]
+X2214007_JCC287_PC9_1w_rel_GEX.flt.srt <- X2214007_JCC287_PC9_1w_rel_GEX.flt.srt[!grepl("FTH1", rownames(X2214007_JCC287_PC9_1w_rel_GEX.flt.srt)), ]
+X2214007_JCC287_PC9_1w_rel_GEX.flt.srt <- X2214007_JCC287_PC9_1w_rel_GEX.flt.srt[!grepl("FTL", rownames(X2214007_JCC287_PC9_1w_rel_GEX.flt.srt)), ]
+
+X2214007_JCC287_PC9_1w_rel_GEX.std.srt <-
+  standard_preprocess(
+    X2214007_JCC287_PC9_1w_rel_GEX.flt.srt,
+    prefix = "X2214007_JCC287_PC9_1w_rel_GEX.std"
+  )
+```
+
+## Parental/Mock
+
+```{r preproc-PT}
+X2214004_JCC287_PC9_MOCK2_GEX.srt <-
+  Read10X_h5(filename = file.path(
+    SRM229845_LOCAL_CACHE_DIR, 
+    X2214004_JCC287_PC9_MOCK2_GEX.CR_OUT, 
+    "outs",
+    "filtered_feature_bc_matrix.h5"
+  )) %>%
+  CreateSeuratObject(counts = .,
+                     project = X2214004_JCC287_PC9_MOCK2_GEX.CR_OUT)
+
+# Add mito ratio, ribo ratio and alias
+X2214004_JCC287_PC9_MOCK2_GEX.srt <- add_alias_meta(X2214004_JCC287_PC9_MOCK2_GEX.srt)
+
+# After tasting the thresholds
+nFeature_min <- 3500
+nFeature_max <- 10000
+mito_ratio <- 25
+ribo_ratio <- 10
+
+# Filtering 
+min_gene_cell_frac <- 1.5e-3
+ncol(X2214004_JCC287_PC9_MOCK2_GEX.srt) * min_gene_cell_frac
+selected_c <-
+  WhichCells(
+    X2214004_JCC287_PC9_MOCK2_GEX.srt,
+    expression = nFeature_RNA > nFeature_min &
+      nFeature_RNA < nFeature_max
+  )
+selected_f <-
+  rownames(X2214004_JCC287_PC9_MOCK2_GEX.srt)[Matrix::rowSums(X2214004_JCC287_PC9_MOCK2_GEX.srt) > floor(ncol(X2214004_JCC287_PC9_MOCK2_GEX.srt) * min_gene_cell_frac)]
+
+
+X2214004_JCC287_PC9_MOCK2_GEX.flt.srt <-
+  subset(X2214004_JCC287_PC9_MOCK2_GEX.srt,
+         features = selected_f,
+         cells = selected_c)
+
+X2214004_JCC287_PC9_MOCK2_GEX.flt.srt <-
+  subset(X2214004_JCC287_PC9_MOCK2_GEX.flt.srt,
+         subset = mitoRatio < mito_ratio & riboRatio > ribo_ratio)
+
+X2214004_JCC287_PC9_MOCK2_GEX.flt.srt[!grepl("MALAT1", rownames(X2214004_JCC287_PC9_MOCK2_GEX.flt.srt)), ]
+X2214004_JCC287_PC9_MOCK2_GEX.flt.srt <- X2214004_JCC287_PC9_MOCK2_GEX.flt.srt[!grepl("^MT-", rownames(X2214004_JCC287_PC9_MOCK2_GEX.flt.srt)), ]
+X2214004_JCC287_PC9_MOCK2_GEX.flt.srt <- X2214004_JCC287_PC9_MOCK2_GEX.flt.srt[!grepl("^RP[SL]", rownames(X2214004_JCC287_PC9_MOCK2_GEX.flt.srt)), ]
+X2214004_JCC287_PC9_MOCK2_GEX.flt.srt <- X2214004_JCC287_PC9_MOCK2_GEX.flt.srt[!grepl("FTH1", rownames(X2214004_JCC287_PC9_MOCK2_GEX.flt.srt)), ]
+X2214004_JCC287_PC9_MOCK2_GEX.flt.srt <- X2214004_JCC287_PC9_MOCK2_GEX.flt.srt[!grepl("FTL", rownames(X2214004_JCC287_PC9_MOCK2_GEX.flt.srt)), ]
+
+X2214004_JCC287_PC9_MOCK2_GEX.std.srt <-
+  standard_preprocess(
+    X2214004_JCC287_PC9_MOCK2_GEX.flt.srt,
+    prefix = "X2214004_JCC287_PC9_MOCK2_GEX.std"
+  )
+```
+
+# Down-sampling and merge 
+
+The samples at different time points have different number of cells. I down-sample the cells so that all time points have the same number.
+
+```{r PC9-set6-down-sample}
+# Common genes
+lapply(list(
+  X2214004_JCC287_PC9_MOCK2_GEX.std.srt,
+  X2214005_JCC287_PC9_1d_rel_GEX.std.srt,
+  X2214006_JCC287_PC9_3d_rel_GEX.std.srt,
+  X2214007_JCC287_PC9_1w_rel_GEX.std.srt
+), rownames) %>%
+  Reduce(f = intersect, x = .) -> PC9_set6.common_genes
+save(PC9_set6.common_genes, file = file.path(PC9_SET6.RES, "PC9_set6.common_genes.Rda"))
+
+# Project name
+sapply(list(
+  X2214004_JCC287_PC9_MOCK2_GEX.std.srt,
+  X2214005_JCC287_PC9_1d_rel_GEX.std.srt,
+  X2214006_JCC287_PC9_3d_rel_GEX.std.srt,
+  X2214007_JCC287_PC9_1w_rel_GEX.std.srt
+), function(x) {
+  x@project.name
+}) -> PC9_set6.proj_name
+
+# Min cell number
+lapply(list(
+  X2214004_JCC287_PC9_MOCK2_GEX.std.srt,
+  X2214005_JCC287_PC9_1d_rel_GEX.std.srt,
+  X2214006_JCC287_PC9_3d_rel_GEX.std.srt,
+  X2214007_JCC287_PC9_1w_rel_GEX.std.srt
+), ncol) %>%
+  unlist() %>%
+  min() -> min_cell_counts
+
+
+# Cell barcode index
+set.seed(42)
+lapply(list(
+  X2214004_JCC287_PC9_MOCK2_GEX.std.srt,
+  X2214005_JCC287_PC9_1d_rel_GEX.std.srt,
+  X2214006_JCC287_PC9_3d_rel_GEX.std.srt,
+  X2214007_JCC287_PC9_1w_rel_GEX.std.srt
+), function(x) {
+  cell_num <- ncol(x)
+  cell_idx <- sample(1:cell_num, min_cell_counts, replace = FALSE)
+  cell_idx
+}) -> PC9_set6.down_sample
+
+# Check
+lapply(PC9_set6.down_sample, length)
+
+save(PC9_set6.down_sample, file = file.path(PC9_SET6.RES, "PC9_set6.down_sample.Rda"))
+
+# Down-sampled and select common genes
+set.seed(42)
+lapply(list(
+  X2214004_JCC287_PC9_MOCK2_GEX.std.srt,
+  X2214005_JCC287_PC9_1d_rel_GEX.std.srt,
+  X2214006_JCC287_PC9_3d_rel_GEX.std.srt,
+  X2214007_JCC287_PC9_1w_rel_GEX.std.srt
+), function(x) {
+  cell_num <- ncol(x)
+  cell_idx <- sample(1:cell_num, min_cell_counts, replace = FALSE)
+  # Select common genes
+  x[PC9_set6.common_genes, cell_idx]
+}) -> PC9_set6.srtLst
+
+lapply(PC9_set6.srtLst, colnames) -> PC9_set6.down_sample.barcode
+names(PC9_set6.down_sample.barcode) <- PC9_set6.proj_name
+
+# Check
+lapply(PC9_set6.srtLst, ncol)
+lapply(PC9_set6.srtLst, nrow)
+lapply(PC9_set6.down_sample.barcode, length)
+
+save(PC9_set6.down_sample.barcode, file = file.path(PC9_SET6.RES, "PC9_set6.down_sample.barcode.Rda"))
+
+# Clean
+save(
+  X2214004_JCC287_PC9_MOCK2_GEX.std.srt,
+  X2214005_JCC287_PC9_1d_rel_GEX.std.srt,
+  X2214006_JCC287_PC9_3d_rel_GEX.std.srt,
+  X2214007_JCC287_PC9_1w_rel_GEX.std.srt,
+  file = file.path(PC9_SET6.RES, "samples4.std.srt.Rda")
+)
+
+rm(
+  X2214004_JCC287_PC9_MOCK2_GEX.std.srt,
+  X2214005_JCC287_PC9_1d_rel_GEX.std.srt,
+  X2214006_JCC287_PC9_3d_rel_GEX.std.srt,
+  X2214007_JCC287_PC9_1w_rel_GEX.std.srt
+)
+
+gc()
+```
+
+I merge and follow the standard processing regarding to Seurat documentation, assuming there is no batch effect since the experiments were carried out by the same person and on the same day. 
+
+```{r PC9-set6-merge-standard-norm}
+PC9_set6.merge.srt <- merge(
+  x = PC9_set6.srtLst[[1]],
+  y = c(
+    PC9_set6.srtLst[[2]],
+    PC9_set6.srtLst[[3]],
+    PC9_set6.srtLst[[4]]
+  ),
+  add.cell.ids = c("PT", "PS1D", "PS3D", "PS7D"),
+  project = "PC9_set6_merge"
+)
+
+# Add group
+PC9_set6.merge.srt %>%
+  colnames() %>%
+  stringr::str_remove("_[ACGT]+-[1-9]+$") %>%
+  forcats::fct_relevel(., "PS1D", "PS3D", "PS7D", "PT") -> Group
+PC9_set6.merge.srt[["Group"]] <- Group
+
+save(PC9_set6.merge.srt, file = file.path(PC9_SET6.RES, "PC9_set6.merge.srt.Rda"))
+
+# Clean
+rm(PC9_set6.srtLst)
+gc()
+
+# Standard preprocessing
+PC9_set6.merge.std.srt <-
+  standard_preprocess.merge(
+    PC9_set6.merge.srt,
+    use_pre_cal_cell_cycle_scores = TRUE,
+    prefix = "PC9_set6.merge.std",
+    Rda_file = file.path(PC9_SET6.RES, "PC9_set6.merge.std.srt.Rda")
+  )
+
+PC9_set6.merge.std.meta <- PC9_set6.merge.std.srt@meta.data
+
+save(
+  PC9_set6.merge.std.meta,
+  file = file.path(PC9_SET6.RES, "PC9_set6.merge.std.meta.Rda")
+)
+```
+
+# Trajectory analysis
+
+## Preparing the UMAP
+
+UMAP with the default parameters do not have obvious trajectories, I tune the parameters as the author of Slingshot suggested. Alternatively, other dimensional reduction method can be used.
+
+```{r tune-UMAP}
+# Choose a = 200, b = 0.4
+PC9_set6.merge.std.srt <-
+  RunUMAP(PC9_set6.merge.std.srt,
+          dims = RunUMAP.DIMS,
+          a = 200,
+          b = 0.4,
+          verbose = TRUE)
+gc()
+
+PC9_set6.merge.std.a200.b0.4.umap <- PC9_set6.merge.std.srt@reductions$umap
+save(PC9_set6.merge.std.a200.b0.4.umap, file = file.path(PC9_SET6.RES, "PC9_set6.merge.std.a200.b0.4.umap.Rda"))
+
+forcats::fct_relevel(PC9_set6.merge.std.srt$Group, "PS1D", "PS3D", "PS7D", "PT") -> PC9_set6.merge.std.group.fct
+
+levels(PC9_set6.merge.std.group.fct)
+PC9_set6.merge.std.srt$Group <- PC9_set6.merge.std.group.fct
+Idents(PC9_set6.merge.std.srt) <- "Group"
+PC9_set6.merge.std.group_size <- unique(PC9_set6.merge.std.srt$Group) %>%
+  length()
+PC9_set6.merge.std.group.pal <- ggsci_pal_d(ggsci_pal_name = "jco", pal_size = PC9_set6.merge.std.group_size)
+
+save(PC9_set6.merge.std.group.pal, PC9_set6.merge.std.group_size, file = file.path(PC9_SET6.RES, "PC9_set6.merge.std.group.pal.Rda"))
+```
+
+## Trajectory analysis using Slingshot
+
+```{r PC9-set6-slingshot-std-approxPt150-chosen}
+gc()
+DefaultAssay(PC9_set6.merge.std.srt) <- "RNA"
+
+PC9_set6.merge.std.srt@meta.data %>%
+  colnames() %>%
+  grep(pattern = "^sling", x = ., value = TRUE)
+
+PC9_set6.merge.std.sce <-
+  as.SingleCellExperiment(x = PC9_set6.merge.std.srt, assay = "RNA")
+PC9_set6.merge.std.sce@colData %>%
+  colnames() %>%
+  grep(pattern = "^sling", x = ., value = TRUE)
+
+rd_method <- "UMAP"
+approx_pt <- 150
+
+library(slingshot)
+library(SingleCellExperiment)
+
+# Run
+PC9_set6.merge.std.sce <-
+  slingshot(
+    PC9_set6.merge.std.sce,
+    reducedDim = rd_method,
+    clusterLabels = PC9_set6.merge.std.sce$Group,
+    start.clus = "PS1D",
+    # end.clus = "PS7D",
+    approx_points = approx_pt
+  )
+gc()
+
+# Add to Seurat object
+PC9_set6.merge.std.sce@colData %>%
+  colnames() %>%
+  grep(pattern = "^sling", x = ., value = TRUE) -> slingshot_res_colnames
+slingshot_res_colnames
+for (cn in slingshot_res_colnames) {
+  message(cn)
+  PC9_set6.merge.std.srt[[cn]] <- PC9_set6.merge.std.sce@colData[, cn]
+}
+```
+
+```{r PC9-set6-slingshot-std-approxPt150-common-umaps-chosen}
+# Plot
+## UMAP by group
+table(PC9_set6.merge.std.srt$Group == "PT")
+PT_barcode <- colnames(PC9_set6.merge.std.srt)[PC9_set6.merge.std.srt$Group == "PT"]
+DimPlot(
+  PC9_set6.merge.std.srt,
+  reduction = "umap",
+  group.by = "Group",
+  label = FALSE,
+  # order = PT_barcode,
+  shuffle = TRUE,
+  cols = PC9_set6.merge.std.group.pal
+) +
+  # scale_size_manual(values = c(0.5, 0.5, 0.5, 4), breaks = levels(group.fct)) +
+  ggtitle("UMAP") +
+  labs(x = "UMAP 1", y = "UMAP 2") +
+  theme(title = element_text(size = 10)) -> PC9_set6.merge.std.groupByGroup.umap
+
+# Add trajectories
+PC9_set6.merge.std.traj_num <- length(slingshot_res_colnames) - 1
+PC9_set6.merge.std.traj.pal <-
+  ggsci_pal_d(ggsci_pal_name = "aaas", pal_size = PC9_set6.merge.std.traj_num)
+lapply(1:PC9_set6.merge.std.traj_num, function(i) {
+  message(glue("Trajectory {i}"))
+  PC9_set6.RNA.slingshot_curvei_coord.df <-
+    slingCurves(PC9_set6.merge.std.sce)[[i]]$s[slingCurves(PC9_set6.merge.std.sce)[[i]]$ord,] %>%
+    as.data.frame()
+  PC9_set6.merge.std.groupByGroup.umap +
+    ggplot2::geom_path(
+      data = PC9_set6.RNA.slingshot_curvei_coord.df,
+      aes(x = UMAP_1, y = UMAP_2),
+      size = 1.5,
+      color = PC9_set6.merge.std.traj.pal[i],
+      arrow = arrow(angle = 30)
+    ) +
+    labs(x = "UMAP 1", y = "UMAP 2") +
+    theme_bw() +
+    theme(
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.background = element_blank()
+    ) ->> PC9_set6.merge.std.groupByGroup.umap
+}) %>%
+  invisible()
+
+# Add caption and save
+PC9_set6.merge.std.groupByGroup.umap +
+  plot_annotation(
+    title = "Trajectory",
+    subtitle = glue("Slingshot trajectories"),
+    caption = glue(
+      "Regress out cell cycle (S and G2M scores), proportion of reads mapped to mitochondrial,
+    gene number per cell.
+    Dim=40 without specific mention.
+    Trajectory: Slingshot, start from PS, approx_points = {approx_pt}, integrated assay, {rd_method} project."
+    ),
+    theme = theme(
+      title = element_text(size = 12, face = "bold"),
+      plot.caption = element_text(size = 9,
+                                  hjust = 0,
+                                  face = "plain")
+    )
+  ) -> PC9_set6.merge.std.groupByGroup.umap.comb
+ggsave(
+  plot = PC9_set6.merge.std.groupByGroup.umap.comb,
+  filename = file.path(
+    PC9_SET6.RES,
+    glue("PC9_set6.merge.std.Slingshot.groupByGroup.umap.comb.pdf")
+  ),
+  height = 5.6,
+  width = 5
+)
+```
+
+
+```{r PC9-set6-slingshot-std-approxPt150-umaps-by-trajectory}
+# plot(PC9_set6.merge.std.srt$slingPseudotime_1, PC9_set6.merge.std.srt$slingPseudotime_2)
+## Combine UMAPs by trajectory
+PC9_set6.merge.std.traj_num <- length(slingshot_res_colnames) - 1
+lapply(1:PC9_set6.merge.std.traj_num, function(i) {
+  message(glue("Trajectory {i}"))
+  feat_name <- paste0("slingPseudotime_", i)
+  PC9_set6.RNA.slingshot_curvei_coord.df <-
+    slingCurves(PC9_set6.merge.std.sce)[[i]]$s[slingCurves(PC9_set6.merge.std.sce)[[i]]$ord, ] %>%
+    as.data.frame()
+  FeaturePlot(
+    PC9_set6.merge.std.srt,
+    reduction = "umap",
+    features = feat_name,
+    cols = viridis_pal(begin = 0.1, end = 0.9)(2),
+    combine = FALSE
+  ) %>%
+    lapply(., function(p) {
+      p +
+        lims(x = c(-0.25, 0.25), y = c(-0.25, 0.25)) +
+        ggplot2::geom_path(
+          data = PC9_set6.RNA.slingshot_curvei_coord.df,
+          aes(x = UMAP_1, y = UMAP_2),
+          size = 1.5,
+          color = PC9_set6.merge.std.traj.pal[i],
+          arrow = arrow(angle = 30)
+        ) +
+        labs(x = "UMAP 1", y = "UMAP 2") +
+        theme_bw() +
+        theme(
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank()
+        )
+    }) -> PC9_set6.merge.std.pseudotime.umap
+  ## Pseudotime UMAP by group
+  FeaturePlot(
+    PC9_set6.merge.std.srt,
+    reduction = "umap",
+    features = feat_name,
+    cols = viridis_pal(begin = 0.1, end = 0.9)(2),
+    split.by = "Group",
+    combine = FALSE
+  ) %>%
+    lapply(., function(p) {
+      p +
+        lims(x = c(-0.25, 0.25), y = c(-0.25, 0.25)) +
+        ggplot2::geom_path(
+          data = PC9_set6.RNA.slingshot_curvei_coord.df,
+          aes(x = UMAP_1, y = UMAP_2),
+          size = 1.5,
+          color = PC9_set6.merge.std.traj.pal[i],
+          arrow = arrow(angle = 30)
+        ) +
+        labs(x = "UMAP 1", y = "UMAP 2") +
+        theme_bw() +
+        theme(
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.background = element_blank()
+        )
+    }) -> umapLst
+  umapLst$Pseudotime <- PC9_set6.merge.std.pseudotime.umap[[1]]
+  umapLst2 <- list(
+    Group = PC9_set6.merge.std.groupByGroup.umap,
+    Pseudotime = umapLst$Pseudotime + ggtitle("Pseudotime"),
+    PS1D = umapLst[[1]] + ggtitle("PS1D"),
+    PS3D = umapLst[[2]] + ggtitle("PS3D"),
+    PS7D = umapLst[[3]] + ggtitle("PS7D"),
+    PT = umapLst[[4]] + ggtitle("PT")
+  )
+  
+  wrap_plots(umapLst2, nrow = 2) +
+    plot_annotation(
+      title = "Trajectory",
+      subtitle = glue("Slingshot trajectory {i}"),
+      caption = glue(
+        "Regress out cell cycle (S and G2M scores), proportion of reads mapped to mitochondrial,
+    gene number per cell.
+    Dim=40 without specific mention.
+    Trajectory: Slingshot, start clusters PS, end cluster not specified, approx_points = {approx_pt}, integrated assay, {rd_method} project."
+      ),
+    theme = theme(
+      title = element_text(size = 12, face = "bold"),
+      plot.caption = element_text(
+        size = 9,
+        hjust = 0,
+        face = "plain"
+      )
+    )
+    ) -> PC9_set6.Slingshot.umaps
+  ggsave(
+    plot = PC9_set6.Slingshot.umaps,
+    filename = file.path(
+      PC9_SET6.RES,
+      glue("PC9_set6.Slingshot_trajectory{i}.umaps.pdf")
+    ),
+    height = 4.0 * 2,
+    width = 4.5 * 3
+  )
+}) -> PC9_set6.merge.std.umaps
+```
+
+
+```{r PC9-set6-slingshot-std-approxPt150-umaps-density}
+# Pseudotime density
+PC9_set6.merge.std.meta.df <- PC9_set6.merge.std.srt@meta.data
+
+PC9_set6.merge.std.traj_num <- length(slingshot_res_colnames) - 1
+lapply(1:PC9_set6.merge.std.traj_num, function(i) {
+  message(glue("Trajectory {i}"))
+  feat_name <- paste0("slingPseudotime_", i)
+  df <- PC9_set6.merge.std.meta.df[, c("Group", feat_name)]
+  colnames(df) <- c("Group", "Pseudotime")
+  ggplot(df,
+         aes(x = Pseudotime, group = Group)) +
+    geom_density(aes(fill = Group, color = Group), alpha = 0.5) +
+    scale_fill_manual(values = PC9_set6.merge.std.group.pal) +
+    scale_color_manual(values = PC9_set6.merge.std.group.pal) +
+    labs(x = "Pseudotime", y = "Density") +
+    facet_grid(Group ~ ., scales = "fixed") +
+    ggtitle(glue("Trajectory {i}")) +
+    theme_bw() +
+    ggplot2::theme(
+      legend.position = "none",
+      axis.title.x = element_text(size = 7, face = "bold"),
+      # axis.ticks.x = element_blank(),
+      axis.title.y = element_text(size = 7, face = "bold"),
+      axis.text.y = element_text(size = 6),
+      strip.background.y = element_rect(fill = "grey20"),
+      strip.text.y = element_text(
+        angle = 0,
+        face = "bold",
+        size = 7,
+        color = "grey90"
+      ),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.background = element_blank()
+    ) -> PC9_set6.Slingshot.track
+}) -> PC9_set6.Slingshot.tracks
+
+wrap_plots(PC9_set6.Slingshot.tracks, nrow = 1) +
+  plot_annotation(
+    title = "Trajectory analysis",
+    subtitle = glue("Slingshot"),
+    caption = glue(
+        "Regress out cell cycle (S and G2M scores), proportion of reads mapped to mitochondrial,
+    gene number per cell.
+    Dim=40 without specific mention.
+    Trajectory: Slingshot, start clusters PS, end cluster not specified, approx_points = {approx_pt}, integrated assay, {rd_method} project."
+      ),
+    theme = theme(
+      title = element_text(size = 12, face = "bold"),
+      plot.caption = element_text(size = 9,
+                                  hjust = 0,
+                                  face = "plain")
+    )
+  ) -> PC9_set6.Slingshot.tracks.comb
+  
+ggsave(
+    plot = PC9_set6.Slingshot.tracks.comb,
+    filename = file.path(PC9_SET6.RES, "PC9_set6.Slingshot.tracks.comb.pdf"),
+    height = 0.8 * PC9_set6.merge.std.group_size + 2,
+    width = 3 * length(PC9_set6.Slingshot.tracks)
+  )
+```
+
+# Trajectory-based differential expression analysis
+
+```{r PC9-set6-slingshot-integrated-approxPt150-tradeSeq-nknot-traj}
+library(tradeSeq)
+
+# Fit GAM (very slow, takes 1 hour 12 min)
+library(BiocParallel)
+registered()
+bpparam <- MulticoreParam(workers = multicoreWorkers())
+GAM_nknots <- 6
+set.seed(42)
+start_time <- Sys.time()
+BiocParallel::register(bpparam)
+PC9_set6.merge.std.RNA.sce <-
+  as.SingleCellExperiment(PC9_set6.merge.std.srt, assay = "RNA")
+PC9_set6.merge.std.RNA.sce <-
+  fitGAM(
+    counts = GetAssayData(PC9_set6.merge.std.srt, slot = "count", assay = "RNA"),
+    sds = SlingshotDataSet(PC9_set6.merge.std.sce),
+    nknots = GAM_nknots
+  )
+end_time <- Sys.time()
+BiocParallel::register(BiocParallel::SerialParam())
+gc()
+
+save(
+  PC9_set6.merge.std.RNA.sce,
+  start_time,
+  end_time,
+  file = file.path(
+    PC9_SET6.RES,
+    "PC9_set6.merge.std.RNA.sce.Rda"
+  )
+)
+
+# Within-lineage comparisons: Association of gene expression with pseudotime
+PC9_set6.merge.std.tradeSeq.assoTestRes <-
+  associationTest(PC9_set6.merge.std.RNA.sce,
+                  lineages = TRUE,
+                  l2fc = TRADESEQ.ASSOTEST.LFC_MIN)
+
+# DEGs filter
+PC9_set6.merge.std.tradeSeq.assoTest.feat_idx <-
+  which(p.adjust(PC9_set6.merge.std.tradeSeq.assoTestRes$pvalue, "fdr") <= TRADESEQ.ASSOTEST.FDR_MAX)
+PC9_set6.merge.std.tradeSeq.assoTest.gene_symbols <-
+  rownames(PC9_set6.merge.std.tradeSeq.assoTestRes)[PC9_set6.merge.std.tradeSeq.assoTest.feat_idx]
+
+# Save in Excel
+PC9_set6.merge.std.tradeSeq.assoTestRes %>%
+  tibble::rownames_to_column(., var = "Gene_symbol") %>%
+  dplyr::mutate(FDR = p.adjust(pvalue, "fdr")) %>%
+  dplyr::arrange(pvalue) -> PC9_set6.merge.std.tradeSeq.asso.df
+
+PC9_set6.merge.std.tradeSeq.asso.df %>%
+  dplyr::filter(FDR < TRADESEQ.ASSOTEST.FDR_MAX) -> PC9_set6.merge.std.tradeSeq.asso.flt.df
+
+filter_spreadsheet_name <- glue("FDR {TRADESEQ.ASSOTEST.FDR_MAX}")
+wb <- createWorkbook()
+addWorksheet(wb, "All")
+writeData(wb, "All", PC9_set6.merge.std.tradeSeq.asso.df)
+addWorksheet(wb, filter_spreadsheet_name)
+writeData(wb, filter_spreadsheet_name, PC9_set6.merge.std.tradeSeq.asso.flt.df)
+saveWorkbook(
+  wb,
+  file = file.path(
+    PC9_SET6.RES,
+    "PC9_set6.merge.std.tradeSeq.assoTest.xlsx"
+  ),
+  overwrite = TRUE
+)
+
+save(
+  TRADESEQ.ASSOTEST.LFC_MIN,
+  TRADESEQ.ASSOTEST.FDR_MAX,
+  PC9_set6.merge.std.tradeSeq.assoTestRes,
+  PC9_set6.merge.std.tradeSeq.assoTest.feat_idx,
+  PC9_set6.merge.std.tradeSeq.assoTest.gene_symbols,
+  PC9_set6.merge.std.tradeSeq.asso.df,
+  PC9_set6.merge.std.tradeSeq.asso.flt.df,
+  file = file.path(
+    PC9_SET6.RES,
+    "PC9_set6.merge.std.tradeSeq.assoTest.Rda"
+  )
+)
+```
