@@ -9,6 +9,10 @@ navbar:
     href: about.html
   - text: License
     href: license.html
+  - text: Analyses
+    menu:
+    - text: "PC9 cells trajectory analysis"
+      href: PC9_time_course.html
 output:
   workflowr::wflow_html:
     toc: yes
