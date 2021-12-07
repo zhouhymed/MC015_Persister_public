@@ -89,6 +89,8 @@ TCGA_LUADEGFR.Survival_Clin.df %>%
 
 ## Survival analysis
 
+Overall survival of HRI/EIF2AK1 levels of Q1 vs Q4.
+
 ```{r TCGA-LUADEGFR-survival}
 # Function
 TCGA_LUADEGFR.kmplot.gene <- function(gene_symbol = "EIF2AK1") {
@@ -181,7 +183,7 @@ TCGA_LUADEGFR.kmplot.gene <- function(gene_symbol = "EIF2AK1") {
 }
 ```
 
-### Selected genes
+EIF2AK1/HRI:
 
 ```{r TCGA-LUADEGFR-kmplot-gene-sel}
 gene_symbols <- c("EIF2AK1")
@@ -198,3 +200,11 @@ lapply(gene_symbols[1], function(gene_symbol) {
   )
 })
 ```
+
+# Session information
+
+```{r eval=TRUE}
+load("data/Survival.session_info.v6.Rda")
+Survival.session_info
+```
+

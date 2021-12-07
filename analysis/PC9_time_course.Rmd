@@ -828,3 +828,11 @@ save(
   )
 )
 ```
+
+# Session information
+
+```{r eval=TRUE}
+load("data/PC9_set6.merge.std.session_info.v6.Rda")
+PC9_set6.merge.std.session_info
+```
+
