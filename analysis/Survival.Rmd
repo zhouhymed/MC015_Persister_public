@@ -1,0 +1,200 @@
+---
+title: "Survival analysis"
+output:
+  workflowr::wflow_html:
+    toc: true
+    number_sections: true
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup-Survival, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval=FALSE)
+```
+
+# Setup packages, parameters and paths
+
+```{r}
+library(tidyverse)
+library(survival)
+library(survminer)
+library(glue)
+library(ggplot2)
+library(patchwork)
+
+SURVIVAL_DIR <- tempdir()
+```
+
+# TCGA LUAD EGFR
+
+## Download
+
+```{r TCGA-LUAD-download, eval=FALSE}
+library(UCSCXenaTools)
+
+data("XenaData")
+dim(XenaData)
+
+TCGA_LUAD.xh <- XenaGenerate(subset = XenaHostNames == "tcgaHub") %>% 
+  XenaFilter(filterDatasets = "LUAD")
+
+TCGA_LUAD.xh@datasets
+
+TCGA_LUAD.HiSeqV2.xh <- XenaFilter(TCGA_LUAD.xh,
+                                   filterDatasets = "HiSeqV2$")
+TCGA_LUAD.Clin.xh <- XenaFilter(TCGA_LUAD.xh,
+                                filterDatasets = "clinicalMatrix")
+TCGA_LUAD.Survival.xh <- XenaFilter(TCGA_LUAD.xh,
+                                    filterDatasets = "survival")
+
+cache_data <- function(xh, cache_dir) {
+  XenaQuery(xh) %>%
+    XenaDownload(.,
+                 destdir = cache_dir,
+                 trans_slash = TRUE,
+                 force = FALSE)
+}
+
+._ <-
+  lapply(
+    list(
+      clin = TCGA_LUAD.Clin.xh,
+      gex = TCGA_LUAD.HiSeqV2.xh,
+      survival = TCGA_LUAD.Survival.xh
+    ),
+    cache_data,
+    cache_dir = SURVIVAL_DIR
+  )
+```
+
+## Primary tumors with EGFR mutation
+
+```{r TCGA-LUADEGFR-load}
+TCGA_LUADEGFR.Survival.df <- read.table(file = file.path(SURVIVAL_DIR, "survival__LUAD_survival.txt"), sep = "\t", header = TRUE)
+TCGA_LUADEGFR.Clin.df <- read.table(file = file.path(SURVIVAL_DIR, "TCGA.LUAD.sampleMap__LUAD_clinicalMatrix"), sep = "\t", header = TRUE)
+
+TCGA_LUADEGFR.HiSeqV2.df <- read.table(file = file.path(SURVIVAL_DIR, "TCGA.LUAD.sampleMap__HiSeqV2.gz"), sep = "\t", header = TRUE)
+
+# Primary tumor with EGFR mutation
+colnames(TCGA_LUADEGFR.Survival.df) %in% colnames(TCGA_LUADEGFR.Clin.df)
+TCGA_LUADEGFR.Survival.df %>%
+  dplyr::inner_join(TCGA_LUADEGFR.Clin.df, by = c("sample" = "sampleID", "X_PATIENT" = "X_PATIENT")) %>%
+  dplyr::filter(sample_type == "Primary Tumor") %>%
+  dplyr::filter(egfr_mutation_performed == "YES") -> TCGA_LUADEGFR.Survival_Clin.df
+nrow(TCGA_LUADEGFR.Survival_Clin.df)
+TCGA_LUADEGFR.Survival_Clin.df %>%
+  dplyr::count(EGFR, egfr_mutation_performed)
+```
+
+
+## Survival analysis
+
+```{r TCGA-LUADEGFR-survival}
+# Function
+TCGA_LUADEGFR.kmplot.gene <- function(gene_symbol = "EIF2AK1") {
+  TCGA_LUADEGFR.HiSeqV2.df %>%
+    dplyr::filter(sample == gene_symbol) %>%
+    tidyr::pivot_longer(cols = -sample,
+                        names_to = "SampleID",
+                        values_to = "gene_symbol") %>%
+    dplyr::mutate(SampleID = stringr::str_replace_all(SampleID, "\\.", "-")) -> TCGA_LUADEGFR.HiSeqV2.gene_symbol.df
+
+  # Run
+  days1yr <- 365
+  days5yr <- 365 * 4 + 366
+  TCGA_LUADEGFR.Survival_Clin.df %>%
+    dplyr::inner_join(TCGA_LUADEGFR.HiSeqV2.gene_symbol.df,
+                      by = c("sample" = "SampleID")) %>%
+    dplyr::filter(!is.na(OS) & !is.na(OS.time)) %>%
+    dplyr::mutate(gene_symbol_quantile = gtools::quantcut(gene_symbol, labels = c("Q1", "Q2", "Q3", "Q4"))) %>%
+    dplyr::mutate(gene_symbol_level = ifelse(
+      gene_symbol_quantile == "Q1",
+      "Low",
+      ifelse(gene_symbol_quantile == "Q4", "High", "Medium")
+    )) %>%
+    dplyr::mutate(gene_symbol_level = forcats::fct_relevel(gene_symbol_level, "Low", "Medium", "High")) %>%
+    dplyr::filter(gene_symbol_level %in% c("Low", "High")) %>%
+    dplyr::mutate(gene_symbol_level = droplevels(gene_symbol_level)) ->> TCGA_LUADEGFR.Survival.gene_symbol.df
+  dim(TCGA_LUADEGFR.Survival.gene_symbol.df)
+  gene_symbol_level_count <- table(TCGA_LUADEGFR.Survival.gene_symbol.df$gene_symbol_level)
+  
+  
+  TCGA_LUADEGFR.Survival.gene_symbol.surv <<-
+    survival::Surv(time = TCGA_LUADEGFR.Survival.gene_symbol.df$OS.time / 30, event = TCGA_LUADEGFR.Survival.gene_symbol.df$OS)
+  # summary(TCGA_LUADEGFR.Survival.gene_symbol.surv)
+  
+  TCGA_LUADEGFR.Survival.gene_symbol.cox <- coxph(TCGA_LUADEGFR.Survival.gene_symbol.surv ~ gene_symbol_level,
+            data = TCGA_LUADEGFR.Survival.gene_symbol.df)
+  TCGA_LUADEGFR.Survival.gene_symbol.cox %>%
+    summary() -> cox_res
+  HR <- signif(cox_res$coef[2], digits=2)
+  HR.confint.lower <- signif(cox_res$conf.int[,"lower .95"], 2)
+  HR.confint.upper <- signif(cox_res$conf.int[,"upper .95"], 2)
+  logrank_pval <- signif(cox_res$sctest["pvalue"], 2)
+  plt_title <- glue("{gene_symbol}, 
+                 HR={HR} ({HR.confint.lower}-{HR.confint.upper}), 
+                 logrank p-value={logrank_pval}")
+  
+  TCGA_LUADEGFR.Survival.gene_symbol.sf <<-
+    survfit(TCGA_LUADEGFR.Survival.gene_symbol.surv ~ gene_symbol_level,
+            data = TCGA_LUADEGFR.Survival.gene_symbol.df)
+  # TCGA_LUADEGFR.Survival.gene_symbol.sf
+  message("Plot")
+  ggsurvplot(
+    fit = TCGA_LUADEGFR.Survival.gene_symbol.sf,
+    pval = FALSE,
+    pval.method = FALSE,
+    pval.size = 3,
+    # show p-value of log-rank test.
+    conf.int = TRUE,
+    # show confidence intervals for
+    # point estimaes of survival curves.
+    conf.int.style = "step",
+    # customize style of confidence intervals
+    xlab = "Time in months",
+    title = plt_title,
+    # customize X axis label.
+    break.time.by = 12,
+    # break X axis in time intervals by 200.
+    # ggtheme = theme_light(),
+    # customize plot and risk table with a theme.
+    risk.table = "abs_pct",
+    # absolute number and percentage at risk.
+    risk.table.y.text.col = T,
+    # colour risk table text annotations.
+    risk.table.y.text = FALSE,
+    # show bars instead of names in text annotations
+    # in legend of risk table.
+    # ncensor.plot = TRUE,
+    # plot the number of censored subjects at time t
+    surv.median.line = "none",
+    # add the median survival pointer.
+    legend.labs =
+      c(glue("Low (Q1) ({gene_symbol_level_count['Low']})"),
+        glue("High (Q4) ({gene_symbol_level_count['High']})")),
+    # change legend labels.
+    # Specify median survival
+    # ggtheme = theme_bw(),
+    # Change ggplot2 theme
+    palette = c("grey10", "goldenrod")
+  )
+}
+```
+
+### Selected genes
+
+```{r TCGA-LUADEGFR-kmplot-gene-sel}
+gene_symbols <- c("EIF2AK1")
+gene_symbols[!gene_symbols %in% TCGA_LUADEGFR.HiSeqV2.df$sample]
+lapply(gene_symbols[1], function(gene_symbol) {
+  message(gene_symbol)
+  p <- TCGA_LUADEGFR.kmplot.gene(gene_symbol = gene_symbol)
+  pdf_file <- file.path(SURVIVAL_DIR, glue("TCGA_LUADEGFR.{gene_symbol}.Q1_Q4.pdf"))
+  ggsave(
+    plot = p[[1]] + theme(plot.title = element_text(size = 11)),
+    filename = pdf_file,
+    height = 4,
+    width = 4.2
+  )
+})
+```
