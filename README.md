@@ -10,6 +10,8 @@
     *  `PC9_set6.merge.std.srt.Rda` - Seurat object of the down-sampled, merged and preprocessed scRNA-seq samples of different time points.
     * `PC9_set6.merge.std.session_info.v6.Rda` - session information of trajectory analysis.
     * `Survival.session_info.v6.Rda` - session information of survival analysis.
+    * `apoptosis_persister_signature.xlsx`: the gene set of apoptosis persister signature used in Figure 7N in the manuscript.
+
 * `docs` - HTML files. You can [browse them here](https://markgene.github.io/MC015_Persister_public/index.html).
 
 The repo is built with [workflowr][].
